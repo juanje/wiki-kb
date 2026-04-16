@@ -54,9 +54,9 @@ Read the corresponding reference file **before** starting work.
 
 For questions like "what is X?", "who owns Y?", "what team is Z on?":
 
-1. Read `<wiki-root>/index.md` to find relevant pages.
+1. Read both `<wiki-root>/index.md` and `<wiki-root>/tags.md` to find relevant pages. The index groups pages by category; the tag map groups them by concept — use both for better coverage.
 2. Read the matching page(s) and answer from their content.
-3. If index navigation is insufficient, use `python3 scripts/wiki-tags.py --wiki-root <path> --search "keywords"` as fallback.
+3. If navigation is insufficient, use `python3 scripts/wiki-tags.py --wiki-root <path> --search "keywords"` as fallback.
 
 No reference file needed — the wiki's own structure supports direct lookup.
 
