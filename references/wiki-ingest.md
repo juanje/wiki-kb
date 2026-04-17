@@ -63,8 +63,8 @@ core insight. Useful standalone even if the reader stops here.]
 All section headings are fixed English: `## Key points`, `## Examples`,
 `## Connections`, `## Sources`.
 
-All wiki pages are written directly in `<wiki-root>/` as flat files.
-Never create subdirectories inside the wiki root.
+Each page is one concept. The filename is the concept name as a slug:
+`<wiki-root>/concept-name.md`.
 
 ### Entity pages
 
@@ -218,26 +218,24 @@ from wiki pages. Source traceability is preserved in `.meta/log.md`
 (git-ignored). Only include visible sources when the source is a
 permanent, shareable reference (URL, git repo, published document).
 
-**CRITICAL — flat namespace:** The wiki is a flat directory. Every
-file the agent writes MUST go directly into `<wiki-root>/` as
-`<wiki-root>/[page-name].md`. Before writing any file, verify:
+**Page naming:** Each wiki page represents one concept, and its
+filename is that concept as a short slug. The source file structure is
+irrelevant — only the extracted concept matters.
 
-1. The target path has **no subdirectories** — only `<wiki-root>/name.md`.
-2. The filename is a **short slug** (lowercase, hyphens) — never a
-   source file path, URL, or directory structure.
-3. **Never run mkdir** inside `<wiki-root>/`. If you find yourself
-   creating directories, STOP — something is wrong.
+- Source `~/git/toolchain-chatbot/data/.../con_ostree.html` about
+  OSTree → create `ostree.md`
+- Source `docs/architecture/pipeline-overview.md` about the automotive
+  pipeline → create `automotive-pipeline.md`
+- Source with 5 concepts → create 5 separate pages, one per concept
 
-Source paths (`~/git/repo/docs/file.md`, `../notes/file.md`) are
-**input references**, not output locations. They must never appear as
-part of a wiki file path.
+The filename is always `<wiki-root>/concept-name.md`. No directories,
+no nesting, no replication of the source's file structure.
 
 #### 5a. Create new pages
 
-For each "Create" item: write `<wiki-root>/[page-name].md` — a single
-file directly in the wiki root. The filename is a short descriptive
-slug (e.g., `ostree.md`, `release-process.md`), never derived from the
-source file path.
+For each "Create" item: choose a filename that matches the concept
+name as a short slug (lowercase, hyphens). Write it directly in
+`<wiki-root>/`.
 
 If the manifest Type indicates an entity (glossary, service, team,
 project, person, process, meeting, repository), use the corresponding
