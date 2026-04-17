@@ -266,5 +266,106 @@ class TestFmtSearch(unittest.TestCase):
             self.assertIn("[2]", out)
 
 
+class TestSubdirectorySupport(unittest.TestCase):
+    """Tests for subdirectory-aware page handling."""
+
+    def test_resolve_wiki_link_flat(self):
+        from wiki_common import resolve_wiki_link
+        result = resolve_wiki_link("page-a.md", "page-b.md")
+        self.assertEqual(result, "page-b.md")
+
+    def test_resolve_wiki_link_cross_directory(self):
+        from wiki_common import resolve_wiki_link
+        result = resolve_wiki_link("teams/toolchain.md", "../services/test-console.md")
+        self.assertEqual(result, "services/test-console.md")
+
+    def test_resolve_wiki_link_same_directory(self):
+        from wiki_common import resolve_wiki_link
+        result = resolve_wiki_link("teams/toolchain.md", "other-team.md")
+        self.assertEqual(result, "teams/other-team.md")
+
+    def test_resolve_wiki_link_from_root_to_subdir(self):
+        from wiki_common import resolve_wiki_link
+        result = resolve_wiki_link("page.md", "teams/toolchain.md")
+        self.assertEqual(result, "teams/toolchain.md")
+
+    def test_search_with_subdirectory_pages(self):
+        """Search works correctly when page keys include subdirectory paths."""
+        subdir_pages = {
+            "teams/toolchain.md": _make_page(
+                "teams/toolchain.md", "Toolchain team",
+                ["team", "ci-cd", "pipeline"],
+                "The toolchain team owns CI/CD infrastructure.",
+            ),
+            "services/brew.md": _make_page(
+                "services/brew.md", "Brew",
+                ["service", "build", "rpm"],
+                "Brew is the internal build system for RPMs.",
+            ),
+        }
+        results = wt.search_pages("toolchain", subdir_pages)
+        self.assertTrue(len(results) > 0)
+        self.assertEqual(results[0]["filename"], "teams/toolchain.md")
+
+    def test_search_filename_scoring_uses_basename(self):
+        """Filename scoring matches against basename, not full path."""
+        subdir_pages = {
+            "teams/toolchain.md": _make_page(
+                "teams/toolchain.md", "Toolchain team",
+                ["ci-cd"], "The toolchain team.",
+            ),
+        }
+        results = wt.search_pages("toolchain", subdir_pages)
+        self.assertTrue(len(results) > 0)
+        matches = results[0]["matched_keywords"]
+        self.assertIn("filename", matches.get("toolchain", []))
+
+    def test_get_page_connections_resolves_cross_dir_links(self):
+        content = (
+            "---\ntags: [test]\n---\n\n# Test\n\nSummary.\n\n"
+            "## Connections\n"
+            "- [Other](../services/other.md) — related service\n"
+        )
+        conns = wt.get_page_connections(content, "teams/test.md")
+        self.assertEqual(len(conns), 1)
+        self.assertEqual(conns[0]["page"], "services/other.md")
+
+    def test_get_page_connections_flat_links(self):
+        content = (
+            "---\ntags: [test]\n---\n\n# Test\n\nSummary.\n\n"
+            "## Connections\n"
+            "- [Other](other.md) — related concept\n"
+        )
+        conns = wt.get_page_connections(content, "test.md")
+        self.assertEqual(len(conns), 1)
+        self.assertEqual(conns[0]["page"], "other.md")
+
+    def test_list_wiki_pages_with_subdirs(self):
+        """list_wiki_pages discovers pages in subdirectories."""
+        import tempfile
+        from wiki_common import list_wiki_pages
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.makedirs(os.path.join(tmpdir, "teams"))
+            os.makedirs(os.path.join(tmpdir, ".meta"))
+            for name in ["index.md", "tags.md", "glossary.md"]:
+                with open(os.path.join(tmpdir, name), "w") as f:
+                    f.write(f"# {name}\n")
+            with open(os.path.join(tmpdir, "root-page.md"), "w") as f:
+                f.write("# Root\n")
+            with open(os.path.join(tmpdir, "teams", "toolchain.md"), "w") as f:
+                f.write("# Toolchain\n")
+            with open(os.path.join(tmpdir, ".meta", "log.md"), "w") as f:
+                f.write("# Log\n")
+
+            pages = list_wiki_pages(tmpdir)
+            self.assertIn("root-page.md", pages)
+            self.assertIn(os.path.join("teams", "toolchain.md"), pages)
+            self.assertNotIn("index.md", pages)
+            self.assertNotIn("tags.md", pages)
+            self.assertNotIn("glossary.md", pages)
+            self.assertNotIn(os.path.join(".meta", "log.md"), pages)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

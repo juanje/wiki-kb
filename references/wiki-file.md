@@ -95,9 +95,11 @@ Execute the approved plan:
 
 #### 4a. Create new pages
 
-Write `<wiki-root>/[page-name].md`. If the content describes an entity
-(glossary term, service, team, project, person), use the corresponding
-template from `references/wiki-entities.md`.
+Write the page to `<wiki-root>/[category-slug]/[page-name].md`,
+creating the category subdirectory if it doesn't exist yet.
+If the content describes an entity (glossary term,
+service, team, project, person), use the corresponding template from
+`references/wiki-entities.md`.
 
 #### 4b. Enrich existing pages
 

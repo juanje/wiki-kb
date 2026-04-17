@@ -20,7 +20,7 @@ import os
 import re
 from collections import defaultdict
 
-EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
+from wiki_common import EXCLUDE_FILES, WIKI_LINK_RE, list_wiki_pages, resolve_wiki_link
 
 
 def build_title_map(wiki_dir):
@@ -37,25 +37,29 @@ def build_title_map(wiki_dir):
 
 
 def build_link_graph_with_descriptions(wiki_dir, pages):
-    """Return link graph and connection descriptions."""
+    """Return link graph and connection descriptions.
+
+    Link targets are resolved to wiki-root-relative paths.
+    """
     graph = {}
     descriptions = {}
 
     for p in pages:
         with open(os.path.join(wiki_dir, p)) as f:
             content = f.read()
-        links = set(re.findall(r"\[.*?\]\(([a-zA-Z0-9_-]+\.md)\)", content))
-        graph[p] = links
+        raw_links = set(re.findall(WIKI_LINK_RE, content))
+        graph[p] = {resolve_wiki_link(p, link) for link in raw_links}
 
         conn_match = re.search(
             r"## (?:Conexiones|Connections)\n(.*?)(?:\n## |\Z)", content, re.DOTALL
         )
         if conn_match:
             for m in re.finditer(
-                r"- \[([^\]]+)\]\(([a-zA-Z0-9_-]+\.md)\)\s*[—–-]\s*(.+)",
+                r"- \[([^\]]+)\]\(([a-zA-Z0-9_./-]+\.md)\)\s*[—–-]\s*(.+)",
                 conn_match.group(1),
             ):
-                descriptions[(p, m.group(2))] = {
+                resolved_target = resolve_wiki_link(p, m.group(2))
+                descriptions[(p, resolved_target)] = {
                     "link_title": m.group(1),
                     "description": m.group(3).strip(),
                 }
@@ -65,10 +69,7 @@ def build_link_graph_with_descriptions(wiki_dir, pages):
 
 def find_missing_backlinks(wiki_dir):
     """Find all unidirectional links (missing backlinks) in the wiki."""
-    pages = sorted(
-        f for f in os.listdir(wiki_dir)
-        if f.endswith(".md") and f not in EXCLUDE_FILES and not f.startswith(".")
-    )
+    pages = list_wiki_pages(wiki_dir)
     title_map = build_title_map(wiki_dir)
     graph, descriptions = build_link_graph_with_descriptions(wiki_dir, pages)
 

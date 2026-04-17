@@ -6,13 +6,15 @@ description: >
   synthesize emergent concepts, file ephemeral knowledge, or query the wiki.
   Trigger on: "ingest", "add to knowledge base", "build wiki", "lint",
   "check wiki", "synthesize", "find patterns", "file this", "add to wiki",
-  "import from GitLab", "what is X?", "who owns Y?", "what team is Z on?"
+  "import from GitLab", "organize wiki", "reorganize",
+  "what is X?", "who owns Y?", "what team is Z on?"
 license: Apache-2.0
 compatibility: Requires Python 3.10+. All scripts are stdlib-only.
+allowed-tools: Bash(python3:*) Bash(git:*) Read Write
 metadata:
-  version: 1.0.0
-  authors: [juanje]
-  tags: [knowledge-base, wiki, markdown, local]
+  version: "1.0.0"
+  authors: juanje
+  tags: "knowledge-base, wiki, markdown, local"
   repository: https://gitlab.com/juanjeojeda/wiki-kb
 ---
 
@@ -49,6 +51,7 @@ Read the corresponding reference file **before** starting work.
 | "synthesize", "find abstractions", "what concepts are missing" | `references/wiki-synthesize.md` |
 | "file this", "add this to the wiki", "capture this" | `references/wiki-file.md` |
 | "import from GitLab", "import repo", "ingest this URL" | `references/wiki-import.md` |
+| "organize wiki", "move pages into folders", "reorganize" | `references/wiki-organize.md` |
 | Creating entity pages (glossary, service, team, project, person) | `references/wiki-entities.md` (load alongside the active operation) |
 
 ### Queries
@@ -81,5 +84,48 @@ python3 <skill-dir>/scripts/wiki-check.py --wiki-root <wiki-root>
 | `scripts/wiki-tags.py` | Tag management, synthesis heuristics, search, normalization, glossary generation |
 | `scripts/wiki-backlinks.py` | Missing backlink extraction with batch splitting |
 | `scripts/wiki-log-filter.py` | Skip already-processed files during ingestion |
+| `scripts/wiki-organize.py` | Migrate a flat wiki into subdirectories by index category |
 
 Each reference file documents which scripts to use and when.
+
+## Gotchas
+
+- **Wiki root ≠ skill dir.** The wiki lives at `<wiki-root>` (user's
+  data). The scripts live at `<skill-dir>/scripts/` (this repo). Never
+  confuse the two — scripts take `--wiki-root` to know where the data is.
+- **All wiki content is English.** Regardless of source language. Translate
+  during extraction.
+- **Never commit `.meta/`.** It contains local operational state
+  (ingestion log with local paths). It must be in `.gitignore`.
+- **Every write operation ends with a git commit.** If the wiki is not
+  a git repo, the operation is incomplete.
+- **Entity type names are not tags.** Don't tag pages with `person`,
+  `service`, `team`, etc. — the `type` frontmatter field handles that.
+  Tags describe domain topics.
+- **Flat namespace for filenames.** Even with subdirectories, page
+  filenames should be unique across the entire wiki (no two pages
+  named `overview.md` in different subdirectories).
+
+## Wiki structure
+
+```
+<wiki-root>/
+├── index.md
+├── tags.md
+├── glossary.md
+├── <category-slug>/
+│   ├── <page>.md
+│   └── ...
+├── <category-slug>/
+│   └── ...
+└── .meta/
+```
+
+Pages live in subdirectories named after their index category (slugified).
+New pages are always placed in their category's subdirectory — create it
+if it doesn't exist yet. A brand-new wiki starts with pages in root until
+categories form; once categories exist in `index.md`, pages go into
+subdirectories.
+
+To migrate existing root-level pages into subdirectories, see
+`references/wiki-organize.md`.

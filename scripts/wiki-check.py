@@ -20,7 +20,7 @@ import re
 import sys
 from datetime import datetime
 
-EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
+from wiki_common import EXCLUDE_FILES, WIKI_LINK_RE, list_wiki_pages, resolve_wiki_link
 REQUIRED_FM_FIELDS = ["tags", "sources", "created", "updated"]
 THIN_THRESHOLD = 5
 
@@ -60,12 +60,8 @@ def parse_index(wiki_dir):
 
 
 def list_pages(wiki_dir):
-    """Return set of .md filenames in wiki dir (excluding meta files)."""
-    pages = set()
-    for fn in os.listdir(wiki_dir):
-        if fn.endswith(".md") and fn not in EXCLUDE_FILES and not fn.startswith("."):
-            pages.add(fn)
-    return pages
+    """Return set of .md page paths relative to wiki dir (excluding meta files)."""
+    return set(list_wiki_pages(wiki_dir))
 
 
 def parse_frontmatter(content):
@@ -90,12 +86,13 @@ def parse_frontmatter(content):
     return fields
 
 
-def parse_visible_sources(content, wiki_dir):
+def parse_visible_sources(content, page_abs_dir):
     """Extract source paths from the visible Sources/Fuentes section.
 
     Links in the visible section are relative markdown links like
     ``[title](../path/to/source.md)`` or ``[title](path/to/source.md)``.
-    We resolve them relative to *wiki_dir* and return normalised paths.
+    We resolve them relative to *page_abs_dir* (the page's actual
+    directory on disk) and return normalised absolute paths.
     """
     m = re.search(r"## (?:Fuentes|Sources)\n(.*?)(?:\n## |\Z)", content, re.DOTALL)
     if not m:
@@ -103,19 +100,23 @@ def parse_visible_sources(content, wiki_dir):
     raw_paths = re.findall(r"\]\(([^)]+\.md)\)", m.group(1))
     resolved = []
     for raw in raw_paths:
-        full = os.path.normpath(os.path.join(wiki_dir, raw))
+        full = os.path.normpath(os.path.join(page_abs_dir, raw))
         resolved.append(full)
     return resolved
 
 
 def build_link_graph(wiki_dir, pages):
-    """Build {page: set(targets)} from internal wiki links."""
+    """Build {page: set(targets)} from internal wiki links.
+
+    Link targets are resolved to wiki-root-relative paths so that
+    cross-directory links (``../services/foo.md``) normalise correctly.
+    """
     graph = {}
     for p in pages:
         with open(os.path.join(wiki_dir, p)) as f:
             content = f.read()
-        links = set(re.findall(r"\[.*?\]\(([a-zA-Z0-9_-]+\.md)\)", content))
-        graph[p] = links
+        raw_links = set(re.findall(WIKI_LINK_RE, content))
+        graph[p] = {resolve_wiki_link(p, link) for link in raw_links}
     return graph
 
 
@@ -189,10 +190,11 @@ def check_source_consistency(wiki_dir, pages):
         origin = fields.get("_origin")
         if origin in no_source_origins:
             continue
+        page_abs_dir = os.path.dirname(os.path.join(wiki_dir, p))
         fm_sources = set()
         for src in fields.get("_sources_list", []):
             fm_sources.add(os.path.normpath(os.path.join(wiki_dir, src)))
-        vis_sources = set(parse_visible_sources(content, wiki_dir))
+        vis_sources = set(parse_visible_sources(content, page_abs_dir))
         only_fm = fm_sources - vis_sources
         only_vis = vis_sources - fm_sources
         if only_fm or only_vis:

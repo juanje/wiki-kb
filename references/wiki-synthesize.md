@@ -15,6 +15,8 @@ Discovers emergent concepts — ideas that appear across multiple wiki
 pages but have no dedicated page — and creates those pages by
 synthesizing from existing content.
 
+Link resolution handles cross-directory references transparently.
+
 ## Inputs
 
 - **Scope** (optional) — `full` (default) or a specific heuristic

@@ -15,7 +15,7 @@ import os
 import re
 import sys
 
-EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
+from wiki_common import EXCLUDE_FILES, WIKI_LINK_RE, list_wiki_pages, resolve_wiki_link
 
 
 def gather_stats(wiki_dir):
@@ -35,18 +35,15 @@ def gather_stats(wiki_dir):
                 categories[current_cat] += 1
 
     # List pages and build link graph
-    pages = sorted(
-        f for f in os.listdir(wiki_dir)
-        if f.endswith(".md") and f not in EXCLUDE_FILES and not f.startswith(".")
-    )
+    pages = list_wiki_pages(wiki_dir)
 
     graph = {}
     all_sources = set()
     for p in pages:
         with open(os.path.join(wiki_dir, p)) as f:
             content = f.read()
-        links = set(re.findall(r"\[.*?\]\(([a-zA-Z0-9_-]+\.md)\)", content))
-        graph[p] = links
+        raw_links = set(re.findall(WIKI_LINK_RE, content))
+        graph[p] = {resolve_wiki_link(p, link) for link in raw_links}
         fm_match = re.search(r"^---\n(.*?)\n---", content, re.DOTALL)
         if fm_match:
             all_sources.update(re.findall(r"^\s+- (.+\.md)", fm_match.group(1), re.MULTILINE))

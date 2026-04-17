@@ -9,6 +9,9 @@ knowledge base.
 Run after a batch ingestion, when the wiki has grown significantly,
 or periodically.
 
+All scripts discover pages in subdirectories automatically via
+recursive directory walk — no special flags needed.
+
 ## Inputs
 
 - **Scope** (optional) — `full` (default) or a specific category/page.

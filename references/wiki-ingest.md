@@ -26,8 +26,18 @@ skill improved, or you want finer extraction.
 ├── glossary.md       → All glossary terms — full form + definition (generated)
 ├── .meta/log.md      → Ingestion history (git-ignored)
 ├── .staging/         → Temporary manifests and plans (cleaned after write)
-└── [pages].md        → Individual wiki pages (flat namespace)
+├── <category-slug>/  → Pages grouped by index category
+│   ├── <page>.md
+│   └── ...
+└── <category-slug>/
+    └── ...
 ```
+
+Pages live in subdirectories matching their index category (slugified
+name). Links between pages in different subdirectories use relative
+paths (e.g. `../other-category/page.md`). Root files (`index.md`,
+`tags.md`, `glossary.md`) use root-relative paths
+(e.g. `category-slug/page.md`).
 
 ### Page format
 
@@ -64,7 +74,7 @@ All section headings are fixed English: `## Key points`, `## Examples`,
 `## Connections`, `## Sources`.
 
 Each page is one concept. The filename is the concept name as a slug:
-`<wiki-root>/concept-name.md`.
+`<wiki-root>/category-slug/concept-name.md`.
 
 ### Entity pages
 
@@ -228,14 +238,21 @@ irrelevant — only the extracted concept matters.
   pipeline → create `automotive-pipeline.md`
 - Source with 5 concepts → create 5 separate pages, one per concept
 
-The filename is always `<wiki-root>/concept-name.md`. No directories,
-no nesting, no replication of the source's file structure.
+The filename is always a short concept slug. The source's file structure
+is irrelevant — only the extracted concept matters.
 
 #### 5a. Create new pages
 
 For each "Create" item: choose a filename that matches the concept
-name as a short slug (lowercase, hyphens). Write it directly in
-`<wiki-root>/`.
+name as a short slug (lowercase, hyphens).
+
+**Page placement:**
+
+1. Determine the page's category from the reconciliation plan.
+2. Slugify the category name to get the subdirectory name.
+3. Create the subdirectory if it doesn't exist yet.
+4. Write to `<wiki-root>/category-slug/page-name.md`.
+5. Links to/from other pages use relative paths from the page's location.
 
 If the manifest Type indicates an entity (glossary, service, team,
 project, person, process, meeting, repository), use the corresponding

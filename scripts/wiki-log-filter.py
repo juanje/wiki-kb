@@ -62,7 +62,7 @@ def parse_log(wiki_root):
         # "  - Source articles: file1.md, file2.md, ..." (directory batch ingestions)
         source_match = re.search(r"Source articles?:\s*(.+)", line)
         if source_match:
-            fnames = re.findall(r"([a-zA-Z0-9_-]+\.md)", source_match.group(1))
+            fnames = re.findall(r"([a-zA-Z0-9_./-]+\.md)", source_match.group(1))
             for fname in fnames:
                 ingested[fname] = current_date
 

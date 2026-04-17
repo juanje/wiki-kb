@@ -28,7 +28,7 @@ import unicodedata
 from collections import defaultdict, Counter
 from itertools import combinations
 
-EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
+from wiki_common import EXCLUDE_FILES, WIKI_LINK_RE, list_wiki_pages, resolve_wiki_link
 
 # Tags that mirror entity types — never meaningful synthesis candidates.
 META_TAGS = {
@@ -95,17 +95,24 @@ def get_page_summary(content):
     return " ".join(result)
 
 
-def get_page_connections(content):
-    """Connection entries from ## Conexiones / ## Connections."""
+def get_page_connections(content, page_relpath=""):
+    """Connection entries from ## Conexiones / ## Connections.
+
+    Link targets are resolved to wiki-root-relative paths using
+    *page_relpath* (the page's path relative to wiki root).
+    """
     m = re.search(
         r"## (?:Conexiones|Connections)\n(.*?)(?:\n## |\Z)", content, re.DOTALL
     )
     if not m:
         return []
     entries = re.findall(
-        r"\[(.+?)\]\(([a-zA-Z0-9_-]+\.md)\)\s*[—–-]+\s*(.+?)(?:\n|$)", m.group(1)
+        r"\[(.+?)\]\(([a-zA-Z0-9_./-]+\.md)\)\s*[—–-]+\s*(.+?)(?:\n|$)", m.group(1)
     )
-    return [{"title": t, "page": p, "description": d.strip()} for t, p, d in entries]
+    return [
+        {"title": t, "page": resolve_wiki_link(page_relpath, p), "description": d.strip()}
+        for t, p, d in entries
+    ]
 
 
 def get_full_form(content):
@@ -128,11 +135,13 @@ def count_content_lines(content):
 # ---------------------------------------------------------------------------
 
 def load_wiki(wiki_dir):
-    """Load all markdown pages from the wiki directory."""
+    """Load all markdown pages from the wiki directory.
+
+    Pages are keyed by their path relative to wiki_dir (e.g.
+    ``teams/toolchain.md`` or just ``toolchain.md`` for flat wikis).
+    """
     pages = {}
-    for fn in sorted(os.listdir(wiki_dir)):
-        if not fn.endswith(".md") or fn in EXCLUDE_FILES or fn.startswith("."):
-            continue
+    for fn in list_wiki_pages(wiki_dir):
         with open(os.path.join(wiki_dir, fn), encoding="utf-8") as f:
             content = f.read()
         fm = parse_frontmatter(content)
@@ -184,11 +193,14 @@ def build_tag_index(pages):
 
 
 def build_link_graph(pages):
-    """page -> set of linked pages (internal wiki links only)."""
+    """page -> set of linked pages (internal wiki links only).
+
+    Link targets are resolved to wiki-root-relative paths.
+    """
     graph = {}
     for fn, page in pages.items():
-        links = set(re.findall(r"\[.*?\]\(([a-zA-Z0-9_-]+\.md)\)", page["_content"]))
-        graph[fn] = links
+        raw_links = set(re.findall(WIKI_LINK_RE, page["_content"]))
+        graph[fn] = {resolve_wiki_link(fn, link) for link in raw_links}
     return graph
 
 
@@ -201,7 +213,7 @@ def tag_has_page(tag, pages):
     """Check whether a tag has a corresponding wiki page."""
     tag_ascii = _ascii(tag)
     for fn in pages:
-        stem = fn[:-3]  # strip .md
+        stem = os.path.basename(fn)[:-3]
         if _ascii(stem) == tag_ascii or _ascii(stem) == tag_ascii.replace("-", "_"):
             return True
     return False
@@ -455,9 +467,7 @@ def apply_tag_normalization(canonical, variant, wiki_dir):
     Returns list of files modified.
     """
     modified = []
-    for fn in os.listdir(wiki_dir):
-        if not fn.endswith(".md") or fn in EXCLUDE_FILES or fn.startswith("."):
-            continue
+    for fn in list_wiki_pages(wiki_dir):
         path = os.path.join(wiki_dir, fn)
         with open(path, encoding="utf-8") as f:
             content = f.read()
@@ -517,7 +527,9 @@ def write_tag_artifacts(pages, tag_index, wiki_dir):
     for tag, info in visible_tags.items():
         tag_ascii = _ascii(tag)
         page_fn = next(
-            (fn for fn in pages if _ascii(fn[:-3]) == tag_ascii or _ascii(fn[:-3]) == tag_ascii.replace("-", "_")),
+            (fn for fn in pages
+             if _ascii(os.path.basename(fn)[:-3]) == tag_ascii
+             or _ascii(os.path.basename(fn)[:-3]) == tag_ascii.replace("-", "_")),
             None,
         )
         heading = f"[{tag}]({page_fn})" if page_fn else tag
@@ -681,7 +693,7 @@ def search_pages(query, pages, top_n=5):
         matches = defaultdict(list)
 
         tags_ascii = [_ascii(t.lower()) for t in page["tags"]]
-        fn_ascii = _ascii(fn[:-3].lower())  # strip .md
+        fn_ascii = _ascii(os.path.basename(fn)[:-3].lower())
         title_ascii = _ascii((page["title"] or "").lower())
         summary_ascii = _ascii(get_page_summary(page["_content"]).lower())
 
@@ -700,7 +712,7 @@ def search_pages(query, pages, top_n=5):
                 matches[kw].append("summary")
 
         if score > 0:
-            connections = get_page_connections(page["_content"])
+            connections = get_page_connections(page["_content"], fn)
             scored.append({
                 "filename": fn,
                 "score": score,
@@ -736,7 +748,7 @@ def generate_summaries(filenames, wiki_dir):
             "title": get_page_title(content),
             "tags": fm["tags"],
             "summary": get_page_summary(content),
-            "connections": get_page_connections(content),
+            "connections": get_page_connections(content, fn),
             "content_lines": count_content_lines(content),
             "origin": fm["origin"],
         })
