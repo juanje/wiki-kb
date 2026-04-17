@@ -24,6 +24,17 @@ EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
 REQUIRED_FM_FIELDS = ["tags", "sources", "created", "updated"]
 THIN_THRESHOLD = 5
 
+REQUIRED_SECTIONS = {
+    "glossary":    ["Usage context", "Connections"],
+    "service":     ["Key facts", "Connections"],
+    "team":        ["Key people", "What they own", "Connections"],
+    "project":     ["Key decisions", "Current state", "Connections"],
+    "person":      ["Areas of expertise", "Connections"],
+    "process":     ["Steps", "Connections"],
+    "meeting":     ["Attendees", "Connections"],
+    "repository":  ["Key facts", "Connections"],
+}
+
 
 def parse_index(wiki_dir):
     """Return set of filenames listed in index.md and category map."""
@@ -249,6 +260,23 @@ def check_stale_content(wiki_dir, pages):
     return stale
 
 
+def check_entity_sections(wiki_dir, pages):
+    """Check that entity pages have their type-specific required sections."""
+    issues = []
+    for p in sorted(pages):
+        with open(os.path.join(wiki_dir, p)) as f:
+            content = f.read()
+        fields = parse_frontmatter(content)
+        page_type = fields.get("_type")
+        if not page_type or page_type not in REQUIRED_SECTIONS:
+            continue
+        headings = set(re.findall(r"^## (.+)", content, re.MULTILINE))
+        missing = [s for s in REQUIRED_SECTIONS[page_type] if s not in headings]
+        if missing:
+            issues.append({"page": p, "type": page_type, "missing_sections": missing})
+    return issues
+
+
 def run_all_checks(wiki_dir):
     """Execute all health checks and return results dict."""
     index_entries, categories = parse_index(wiki_dir)
@@ -265,6 +293,7 @@ def run_all_checks(wiki_dir):
         "thin_pages": check_thin_pages(wiki_dir, actual_pages),
         "isolated_pages": check_isolated_pages(graph),
         "stale_content": check_stale_content(wiki_dir, actual_pages),
+        "entity_sections": check_entity_sections(wiki_dir, actual_pages),
     }
     return results
 
@@ -328,6 +357,12 @@ def format_report(results):
             f"{x['page']} (updated: {x['page_updated']}) "
             f"<- {x['source']} (modified: {x['source_modified']})"
         ),
+    )
+    section(
+        "MISSING ENTITY SECTIONS",
+        results["entity_sections"],
+        lambda x: f"{x['page']} ({x['type']}): missing {x['missing_sections']}",
+        "All entity pages have their required sections",
     )
 
     return "\n".join(lines)

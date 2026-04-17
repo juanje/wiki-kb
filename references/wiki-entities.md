@@ -15,6 +15,9 @@ field in frontmatter and follow a type-specific template. Pages without
 |---|---|---|
 | Has a proper name (capitalized, specific) | Likely entity (service, team, person, project) | — |
 | Is an abbreviation or internal jargon | Glossary term | — |
+| Has defined steps, trigger, cadence | Process | — |
+| Is a recurring meeting with attendees | Meeting | — |
+| Is a code repository with URL | Repository | — |
 | Describes a pattern, principle, or abstract idea | — | Concept page |
 | Can be instantiated (multiple "instances" exist) | — | Concept page |
 | Has operational metadata (URL, owner, status) | Entity page | — |
@@ -175,6 +178,107 @@ updated: YYYY-MM-DD
 - [Related person](other-person.md) — [relationship]
 ```
 
+### Process (`type: process`)
+
+Recurring processes with defined steps: releases, certification
+campaigns, onboarding, incident response.
+
+```markdown
+---
+tags: [domain-tag]
+type: process
+origin: ingest | conversation | ephemeral
+owner: [team or person responsible]
+cadence: [frequency — e.g., "biweekly", "per release", "on demand"]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+
+# [Process name]
+
+[What this process accomplishes — 1-2 sentences]
+
+## Trigger
+- [What initiates this process]
+
+## Steps
+1. [Step with owner if relevant]
+2. ...
+
+## Inputs and outputs
+- **Inputs:** [what's needed to start]
+- **Outputs:** [what's produced]
+
+## Connections
+- [Related team](team.md) — [owns/participates]
+- [Related service](service.md) — [used in step N]
+```
+
+### Meeting (`type: meeting`)
+
+Recurring meetings with cadence, purpose, and participants.
+
+```markdown
+---
+tags: [domain-tag]
+type: meeting
+origin: ingest | conversation | ephemeral
+owner: [person who leads/organizes]
+cadence: [e.g., "weekly", "biweekly", "monthly"]
+day: [e.g., "Tuesday", "Thursday biweekly"]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+
+# [Meeting name]
+
+[Purpose of this meeting — 1-2 sentences]
+
+## Attendees
+- [Person or team] — [role in meeting]
+
+## What happens
+- [Typical agenda or focus areas]
+
+## Connections
+- [Related team](team.md) — [participates]
+- [Related project](project.md) — [discussed here]
+```
+
+### Repository (`type: repository`)
+
+Code repositories with URL, ownership, and purpose.
+
+```markdown
+---
+tags: [domain-tag]
+type: repository
+origin: ingest | conversation | ephemeral
+url: [repository URL]
+maintained_by: [team or person]
+language: [primary language, if applicable]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+
+# [Repository name]
+
+[What this repo contains and its role — 1-2 sentences]
+
+## Key facts
+- **URL:** [link]
+- **Language:** [primary language]
+- **Maintained by:** [team]
+- **CI:** [CI system if relevant]
+
+## What it does
+- [Purpose and scope]
+
+## Connections
+- [Related service](service.md) — [repo implements this service]
+- [Related project](project.md) — [part of this project]
+```
+
 ## Design principles
 
 - **Same lifecycle as concepts.** Entity pages are created through any
@@ -191,7 +295,8 @@ updated: YYYY-MM-DD
 
 **Do not use entity types as tags.** The `type` field in frontmatter
 already classifies the page. Tags like `person`, `service`, `team`,
-`project`, `concept`, `glossary` are redundant and pollute synthesis
+`project`, `concept`, `glossary`, `process`, `meeting`, `repository`
+are redundant and pollute synthesis
 heuristics. Tags should describe the **domain** the entity belongs to
 (e.g., `automotive`, `certification`, `ci-cd`), not the entity
 category.
@@ -219,10 +324,38 @@ it appears verbatim in the glossary artifact.
   entity page.
 - If the source repeatedly references a specific person in a professional
   context, consider a `person` entity page.
+- If the source describes a recurring workflow with defined steps
+  (release process, onboarding, certification campaign), consider a
+  `process` entity page.
+- If the source mentions a recurring meeting with attendees and cadence,
+  consider a `meeting` entity page.
+- If the source references a code repository by URL or name, consider a
+  `repository` entity page.
 
 ## Type-specific lint checks
+
+### Frontmatter fields
 
 - Glossary pages for abbreviations should have a `Full form` field.
 - Service pages should have a `url` or `maintained_by` field.
 - Project pages should have a `status` field.
 - Person pages should have a `team` field.
+- Process pages should have an `owner` or `cadence` field.
+- Meeting pages should have a `cadence` or `day` field.
+- Repository pages should have a `url` or `maintained_by` field.
+
+### Required body sections
+
+Each entity type has minimum expected sections. Missing sections are
+reported as info-level findings (not auto-fixable):
+
+| Type | Required sections |
+|---|---|
+| glossary | `Usage context`, `Connections` |
+| service | `Key facts`, `Connections` |
+| team | `Key people`, `What they own`, `Connections` |
+| project | `Key decisions`, `Current state`, `Connections` |
+| person | `Areas of expertise`, `Connections` |
+| process | `Steps`, `Connections` |
+| meeting | `Attendees`, `Connections` |
+| repository | `Key facts`, `Connections` |

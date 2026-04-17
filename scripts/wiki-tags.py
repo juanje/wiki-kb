@@ -31,7 +31,10 @@ from itertools import combinations
 EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
 
 # Tags that mirror entity types — never meaningful synthesis candidates.
-META_TAGS = {"person", "service", "team", "project", "concept", "glossary"}
+META_TAGS = {
+    "person", "service", "team", "project", "concept", "glossary",
+    "process", "meeting", "repository",
+}
 
 # Tunable thresholds
 MIN_PAGES_FOR_CANDIDATE_TAG = 3       # heuristic A: min pages for orphan-dense tag
