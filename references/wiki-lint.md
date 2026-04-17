@@ -21,9 +21,9 @@ or periodically.
 Run all three scripts from the repo root:
 
 ```bash
-python3 scripts/wiki-check.py --wiki-root <path>
-python3 scripts/wiki-stats.py --wiki-root <path>
-python3 scripts/wiki-tags.py --wiki-root <path> --normalize
+python3 <skill-dir>/scripts/wiki-check.py --wiki-root <path>
+python3 <skill-dir>/scripts/wiki-stats.py --wiki-root <path>
+python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --normalize
 ```
 
 **Checks covered by `wiki-check.py`:**
@@ -125,7 +125,7 @@ Apply auto-fixable issues in order:
 4. **Source mismatches** (2f) — sync frontmatter and visible Sources.
 5. **Missing backlinks** (2d) — run:
    ```bash
-   python3 scripts/wiki-backlinks.py --wiki-root <path> --batch 30
+   python3 <skill-dir>/scripts/wiki-backlinks.py --wiki-root <path> --batch 30
    ```
    Launch one subagent per batch. Each subagent reads each target page
    and adds reciprocal entries whose description reflects the reverse
@@ -134,14 +134,14 @@ Apply auto-fixable issues in order:
 7. **Tag normalization** — for each candidate from `--normalize`:
    - E1 (plural/singular) and E3 (accent variant) are auto-fixable:
      ```bash
-     python3 scripts/wiki-tags.py --wiki-root <path> --apply-normalize VARIANT CANONICAL
+     python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --apply-normalize VARIANT CANONICAL
      ```
    - E2 (synonym/cross-language) — report only; requires human judgment.
 
 ### 6. Regenerate tag map and glossary (if fixes applied)
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
+python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
 ### 7. Git commit (if fixes applied)

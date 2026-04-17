@@ -62,7 +62,7 @@ For each candidate concept:
 
 1. Search for related existing pages:
    ```bash
-   python3 scripts/wiki-tags.py --wiki-root <path> --search "keywords"
+   python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --search "keywords"
    ```
 2. If matches found, read the matched pages.
 3. Decide:
@@ -121,7 +121,7 @@ Add new pages to `<wiki-root>/index.md`.
 #### 5b. Regenerate tag map and glossary
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
+python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
 #### 5c. Update log

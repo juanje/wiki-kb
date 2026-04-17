@@ -39,7 +39,7 @@ synthesizing from existing content.
 
 ## Heuristics
 
-Detected by `python3 scripts/wiki-tags.py --wiki-root <path> --candidates`:
+Detected by `python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --candidates`:
 
 | Heuristic | Signal | Threshold |
 |---|---|---|
@@ -53,7 +53,7 @@ Detected by `python3 scripts/wiki-tags.py --wiki-root <path> --candidates`:
 ### 1. Detect candidates (L1)
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --candidates
+python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --candidates
 ```
 
 Ranked list grouped by heuristic. No wiki pages read.
@@ -84,7 +84,7 @@ Filter candidates before any page reads:
 ### 3. L2 read — structural confirmation
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --summaries page1.md page2.md ...
+python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --summaries page1.md page2.md ...
 ```
 
 Decide for each candidate:
@@ -207,7 +207,7 @@ Add new pages under appropriate category.
 #### 6c. Regenerate tag map and glossary
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
+python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
 #### 6d. Update log

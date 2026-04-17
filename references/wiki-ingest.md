@@ -80,10 +80,10 @@ Write → Clean up → Commit), regardless of work set size.
 Use the log filter script to check what needs processing:
 
 ```bash
-python3 scripts/wiki-log-filter.py --wiki-root <path> <source_path> [<source_path> ...]
+python3 <skill-dir>/scripts/wiki-log-filter.py --wiki-root <path> <source_path> [<source_path> ...]
 
 # Force mode:
-python3 scripts/wiki-log-filter.py --wiki-root <path> --force <source_path>
+python3 <skill-dir>/scripts/wiki-log-filter.py --wiki-root <path> --force <source_path>
 ```
 
 Outputs two lists: files to process and files already ingested.
@@ -272,7 +272,7 @@ Append today's ingestion record to `<wiki-root>/.meta/log.md`.
 #### 5g. Cross-referencing pass
 
 ```bash
-python3 scripts/wiki-check.py --wiki-root <path>
+python3 <skill-dir>/scripts/wiki-check.py --wiki-root <path>
 ```
 
 Fix any missing backlinks found.
@@ -280,7 +280,7 @@ Fix any missing backlinks found.
 #### 5h. Regenerate tag map and glossary
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
+python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
 ### 6. Clean up

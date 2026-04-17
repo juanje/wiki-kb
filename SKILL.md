@@ -57,20 +57,29 @@ For questions like "what is X?", "who owns Y?", "what team is Z on?":
 
 1. Read `<wiki-root>/index.md` (categories + top glossary terms) and `<wiki-root>/glossary.md` (all terms with definitions). For tag-based lookup, also read `<wiki-root>/tags.md`.
 2. Read the matching page(s) and answer from their content.
-3. If navigation is insufficient, use `python3 scripts/wiki-tags.py --wiki-root <path> --search "keywords"` as fallback.
+3. If navigation is insufficient, use `python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --search "keywords"` as fallback.
 
 No reference file needed — the wiki's own structure supports direct lookup.
 
 ## Scripts
 
-Stdlib-only Python scripts. All accept `--wiki-root <path>` and `--json`.
+Stdlib-only Python scripts in the `scripts/` directory next to this file.
+All accept `--wiki-root <path>` and `--json`.
+
+**Path resolution:** `<skill-dir>` is the directory containing this
+`SKILL.md` file. Determine its absolute path and use it when invoking
+scripts — the wiki root and the skill directory are different locations:
+
+```bash
+python3 <skill-dir>/scripts/wiki-check.py --wiki-root <wiki-root>
+```
 
 | Script | Purpose |
 |---|---|
-| `wiki-check.py` | Structural checks (orphans, ghosts, broken links, backlinks, frontmatter) |
-| `wiki-stats.py` | Graph statistics (pages, connections, hubs) |
-| `wiki-tags.py` | Tag management, synthesis heuristics, search, normalization, glossary generation |
-| `wiki-backlinks.py` | Missing backlink extraction with batch splitting |
-| `wiki-log-filter.py` | Skip already-processed files during ingestion |
+| `scripts/wiki-check.py` | Structural checks (orphans, ghosts, broken links, backlinks, frontmatter) |
+| `scripts/wiki-stats.py` | Graph statistics (pages, connections, hubs) |
+| `scripts/wiki-tags.py` | Tag management, synthesis heuristics, search, normalization, glossary generation |
+| `scripts/wiki-backlinks.py` | Missing backlink extraction with batch splitting |
+| `scripts/wiki-log-filter.py` | Skip already-processed files during ingestion |
 
 Each reference file documents which scripts to use and when.
