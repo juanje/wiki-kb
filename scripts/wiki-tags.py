@@ -498,59 +498,33 @@ def generate_tag_map(pages, tag_index):
 def write_tag_artifacts(pages, tag_index, wiki_dir):
     """Write tags.md (human-readable) and tag-map.json (machine-readable).
 
-    tags.md lives in the wiki root alongside index.md.
-    tag-map.json lives in .meta/ -- consumed by agents, not humans.
+    tags.md is a clean navigational index grouped by tag.
+    tag-map.json in .meta/ carries full metadata for scripts.
     """
-    from datetime import date
-
     tag_map = generate_tag_map(pages, tag_index)
 
-    # Split into: tags with a dedicated page vs. synthesis candidates
-    has_page = {t: info for t, info in tag_map.items() if info["has_dedicated_page"]}
-    no_page = {t: info for t, info in tag_map.items() if not info["has_dedicated_page"]}
-
-    def page_link(fn, pages):
+    def page_link(fn):
         title = pages[fn]["title"] if fn in pages else fn.replace(".md", "")
         return f"[{title}]({fn})"
 
-    lines = [
-        "# Tag map",
-        "",
-        f"*Generated: {date.today()} — {len(pages)} pages, {len(tag_index)} unique tags*",
-        "",
-        "Thematic index of the wiki. Complements the [category index](index.md).",
-        "A tag with ✓ has a dedicated page; ✗ marks a synthesis candidate.",
-        "",
-        "---",
-        "",
-        "## Concepts with dedicated page (✓)",
-        "",
-    ]
-    for tag, info in has_page.items():
-        # Find the actual wiki page for this tag
+    # Filter out meta-tags that mirror entity types
+    visible_tags = {
+        t: info for t, info in tag_map.items()
+        if t not in META_TAGS
+    }
+
+    lines = ["# Tag map", ""]
+    for tag, info in visible_tags.items():
         tag_ascii = _ascii(tag)
         page_fn = next(
             (fn for fn in pages if _ascii(fn[:-3]) == tag_ascii or _ascii(fn[:-3]) == tag_ascii.replace("-", "_")),
             None,
         )
-        tag_display = f"[{tag}]({page_fn})" if page_fn else tag
-        lines.append(f"### {tag_display} ({info['count']} pages)")
-        for fn in info["pages"]:
-            lines.append(f"- {page_link(fn, pages)}")
+        heading = f"[{tag}]({page_fn})" if page_fn else tag
+        lines.append(f"## {heading}")
         lines.append("")
-
-    lines += [
-        "---",
-        "",
-        "## Concepts without page — synthesis candidates (✗)",
-        "",
-        "*Sorted by frequency. Higher frequency tags have stronger synthesis potential.*",
-        "",
-    ]
-    for tag, info in no_page.items():
-        lines.append(f"### {tag} ({info['count']} pages)")
         for fn in info["pages"]:
-            lines.append(f"- {page_link(fn, pages)}")
+            lines.append(f"- {page_link(fn)}")
         lines.append("")
 
     tags_md = "\n".join(lines)
@@ -558,7 +532,7 @@ def write_tag_artifacts(pages, tag_index, wiki_dir):
     with open(tags_path, "w", encoding="utf-8") as f:
         f.write(tags_md)
 
-    # Machine-readable JSON
+    # Machine-readable JSON (full metadata, unfiltered)
     meta_dir = os.path.join(wiki_dir, ".meta")
     os.makedirs(meta_dir, exist_ok=True)
     json_path = os.path.join(meta_dir, "tag-map.json")
@@ -636,21 +610,12 @@ def write_glossary_artifact(pages, graph, wiki_dir, top_n=GLOSSARY_TOP_N):
     Returns (glossary_path, top_entries) where top_entries are the top N
     entries suitable for inclusion in the index Glossary section.
     """
-    from datetime import date
-
     entries = build_glossary(pages, graph)
     if not entries:
         return None, []
 
     lines = [
         "# Glossary",
-        "",
-        f"*Generated: {date.today()} — {len(entries)} terms*",
-        "",
-        "Quick reference for abbreviations, acronyms, and internal terminology.",
-        "See also the [category index](index.md) and [tag map](tags.md).",
-        "",
-        "---",
         "",
     ]
     for e in entries:
