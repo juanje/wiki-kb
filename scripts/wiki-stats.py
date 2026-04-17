@@ -15,7 +15,7 @@ import os
 import re
 import sys
 
-EXCLUDE_FILES = {"index.md", "tags.md"}
+EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
 
 
 def gather_stats(wiki_dir):

@@ -5,12 +5,15 @@
 """Wiki tag analysis tool — feeds the wiki-synthesize skill.
 
 Analyzes frontmatter tags to find abstraction candidates, co-occurrence clusters,
-disconnected similar pages, and cross-domain bridge concepts.
+disconnected similar pages, and cross-domain bridge concepts. Also generates
+glossary artifacts from entity pages with type: glossary.
 
 Usage:
     python3 scripts/wiki-tags.py --wiki-root <path> --map
     python3 scripts/wiki-tags.py --wiki-root <path> --candidates
     python3 scripts/wiki-tags.py --wiki-root <path> --full
+    python3 scripts/wiki-tags.py --wiki-root <path> --glossary
+    python3 scripts/wiki-tags.py --wiki-root <path> --glossary --save
     python3 scripts/wiki-tags.py --wiki-root <path> --summaries p1.md p2.md ...
 
 Add --json to any mode for machine-readable output.
@@ -25,7 +28,10 @@ import unicodedata
 from collections import defaultdict, Counter
 from itertools import combinations
 
-EXCLUDE_FILES = {"index.md", "tags.md"}
+EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
+
+# Tags that mirror entity types — never meaningful synthesis candidates.
+META_TAGS = {"person", "service", "team", "project", "concept", "glossary"}
 
 # Tunable thresholds
 MIN_PAGES_FOR_CANDIDATE_TAG = 3       # heuristic A: min pages for orphan-dense tag
@@ -49,7 +55,7 @@ def parse_frontmatter(content):
     tm = re.search(r"^tags:\s*\[(.+?)\]", fm, re.MULTILINE)
     result["tags"] = [t.strip() for t in tm.group(1).split(",")] if tm else []
     result["sources"] = re.findall(r"^\s+- (.+\.md)", fm, re.MULTILINE)
-    for field in ("created", "updated", "origin"):
+    for field in ("created", "updated", "origin", "type"):
         fv = re.search(rf"^{field}:\s*(.+)", fm, re.MULTILINE)
         result[field] = fv.group(1).strip() if fv else None
     synthesis_m = re.search(r"^synthesis_sources:\s*\[(.+?)\]", fm, re.MULTILINE)
@@ -99,6 +105,12 @@ def get_page_connections(content):
     return [{"title": t, "page": p, "description": d.strip()} for t, p, d in entries]
 
 
+def get_full_form(content):
+    """Extract the Full form value from page body (glossary pages)."""
+    m = re.search(r"\*\*Full form:\*\*\s*(.+)", content)
+    return m.group(1).strip() if m else None
+
+
 def count_content_lines(content):
     """Non-empty, non-heading lines after frontmatter."""
     body = re.sub(r"^---\n.*?\n---\n", "", content, flags=re.DOTALL)
@@ -125,6 +137,7 @@ def load_wiki(wiki_dir):
             "filename": fn,
             "title": get_page_title(content),
             "tags": fm["tags"],
+            "type": fm.get("type"),
             "sources": fm["sources"],
             "origin": fm["origin"],
             "synthesis_sources": fm["synthesis_sources"],
@@ -199,6 +212,8 @@ def heuristic_a(pages, tag_index, min_pages=MIN_PAGES_FOR_CANDIDATE_TAG):
     """Tags with N+ pages but no dedicated wiki page."""
     results = []
     for tag, tag_pages in tag_index.items():
+        if tag in META_TAGS:
+            continue
         if len(tag_pages) >= min_pages and not tag_has_page(tag, pages):
             conf = min(1.0, len(tag_pages) / 10)
             results.append({
@@ -551,6 +566,127 @@ def write_tag_artifacts(pages, tag_index, wiki_dir):
 
 
 # ---------------------------------------------------------------------------
+# Glossary artifact
+# ---------------------------------------------------------------------------
+
+GLOSSARY_TOP_N = 15
+
+
+def _glossary_definition(content):
+    """Extract the definition paragraph from a glossary page.
+
+    Skips **Full form:** and **Domain:** lines that precede the actual
+    definition, returning only the prose definition sentence(s).
+    """
+    body = re.sub(r"^---\n.*?\n---\n", "", content, flags=re.DOTALL)
+    lines = body.split("\n")
+    capturing = False
+    result = []
+    for line in lines:
+        if line.startswith("# "):
+            capturing = True
+            continue
+        if not capturing:
+            continue
+        if line.startswith("## "):
+            break
+        stripped = line.strip()
+        if stripped.startswith("**Full form:**") or stripped.startswith("**Domain:**"):
+            continue
+        if stripped:
+            result.append(stripped)
+        elif result:
+            break
+    return " ".join(result)
+
+
+def build_glossary(pages, graph):
+    """Collect glossary entries from pages with type: glossary.
+
+    Each entry includes title, filename, full_form, definition, and
+    incoming_links (how many other pages link to this glossary page).
+    Entries are sorted by incoming link count descending.
+    """
+    incoming = Counter()
+    for _fn, targets in graph.items():
+        for t in targets:
+            incoming[t] += 1
+
+    entries = []
+    for fn, page in pages.items():
+        if page.get("type") != "glossary":
+            continue
+        entries.append({
+            "filename": fn,
+            "title": page["title"] or fn.replace(".md", ""),
+            "full_form": get_full_form(page["_content"]),
+            "definition": _glossary_definition(page["_content"]),
+            "incoming_links": incoming.get(fn, 0),
+        })
+    entries.sort(key=lambda e: -e["incoming_links"])
+    return entries
+
+
+def write_glossary_artifact(pages, graph, wiki_dir, top_n=GLOSSARY_TOP_N):
+    """Write glossary.md with all glossary entries.
+
+    Returns (glossary_path, top_entries) where top_entries are the top N
+    entries suitable for inclusion in the index Glossary section.
+    """
+    from datetime import date
+
+    entries = build_glossary(pages, graph)
+    if not entries:
+        return None, []
+
+    lines = [
+        "# Glossary",
+        "",
+        f"*Generated: {date.today()} — {len(entries)} terms*",
+        "",
+        "Quick reference for abbreviations, acronyms, and internal terminology.",
+        "See also the [category index](index.md) and [tag map](tags.md).",
+        "",
+        "---",
+        "",
+    ]
+    for e in entries:
+        full = f" — {e['full_form']}." if _full_form_suffix(e["title"], e["full_form"]) else ""
+        defn = e["definition"][:150] if e["definition"] else ""
+        if defn and not defn.endswith("."):
+            defn += "..."
+        lines.append(f"- **[{e['title']}]({e['filename']})**{full} {defn}")
+
+    glossary_md = "\n".join(lines) + "\n"
+    glossary_path = os.path.join(wiki_dir, "glossary.md")
+    with open(glossary_path, "w", encoding="utf-8") as f:
+        f.write(glossary_md)
+
+    return glossary_path, entries[:top_n]
+
+
+def _full_form_suffix(title, full_form):
+    """Return full_form display only if not already embedded in title."""
+    if not full_form:
+        return ""
+    if full_form.lower() in title.lower():
+        return ""
+    return f" ({full_form})"
+
+
+def fmt_glossary(entries, top_n=GLOSSARY_TOP_N):
+    """Format glossary entries for human-readable output."""
+    lines = [f"\n=== GLOSSARY ({len(entries)} terms, top {top_n} shown) ==="]
+    for i, e in enumerate(entries):
+        if i >= top_n:
+            lines.append(f"\n  ... +{len(entries) - top_n} more (see glossary.md)")
+            break
+        full = _full_form_suffix(e["title"], e["full_form"])
+        lines.append(f"  {e['filename']}: {e['title']}{full}  [{e['incoming_links']} incoming]")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Search (--search)
 # ---------------------------------------------------------------------------
 
@@ -804,6 +940,14 @@ def main():
         help="Replace VARIANT tag with CANONICAL across all wiki pages"
     )
     parser.add_argument(
+        "--glossary", action="store_true",
+        help="Show glossary entries (type: glossary pages). Use with --save to write glossary.md"
+    )
+    parser.add_argument(
+        "--glossary-top", type=int, default=GLOSSARY_TOP_N,
+        help=f"Number of top glossary entries for index section (default: {GLOSSARY_TOP_N})"
+    )
+    parser.add_argument(
         "--search", metavar="QUERY",
         help="Search wiki pages by keyword relevance (accent-insensitive)"
     )
@@ -814,7 +958,7 @@ def main():
     args = parser.parse_args()
 
     if not any([args.map, args.candidates, args.full, args.summaries, args.save,
-                args.normalize, args.apply_normalize, args.search]):
+                args.normalize, args.apply_normalize, args.search, args.glossary]):
         parser.print_help()
         sys.exit(0)
 
@@ -884,10 +1028,19 @@ def main():
         norm_candidates = heuristic_e(pages, tag_index, wiki_dir)
         output["normalize"] = norm_candidates
 
+    if args.glossary or args.full:
+        output["glossary"] = build_glossary(pages, graph)
+
     if args.save:
         tags_path, json_path = write_tag_artifacts(pages, tag_index, wiki_dir)
         print(f"Written: {tags_path}")
         print(f"Written: {json_path}")
+        if args.glossary or args.full:
+            gloss_path, _top = write_glossary_artifact(
+                pages, graph, wiki_dir, top_n=args.glossary_top,
+            )
+            if gloss_path:
+                print(f"Written: {gloss_path}")
 
     if args.json:
         print(json.dumps(output, indent=2, ensure_ascii=False))
@@ -905,6 +1058,9 @@ def main():
 
     if "stats" in output:
         print(fmt_stats(pages, tag_index, output.get("candidates", {})))
+
+    if "glossary" in output:
+        print(fmt_glossary(output["glossary"], top_n=args.glossary_top))
 
     if "summaries" in output:
         print(fmt_summaries(output["summaries"]))

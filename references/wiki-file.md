@@ -118,10 +118,10 @@ Bidirectional connections with explanations.
 
 Add new pages to `<wiki-root>/index.md`.
 
-#### 5b. Regenerate tag map
+#### 5b. Regenerate tag map and glossary
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --map --save
+python3 scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
 #### 5c. Update log

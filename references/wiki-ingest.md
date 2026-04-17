@@ -21,8 +21,9 @@ skill improved, or you want finer extraction.
 
 ```
 <wiki-root>/
-├── index.md          → Categorized list of all pages
+├── index.md          → Categorized list of all pages (includes top glossary terms)
 ├── tags.md           → Thematic navigation (by tag)
+├── glossary.md       → All glossary terms — full form + definition (generated)
 ├── .meta/log.md      → Ingestion history (git-ignored)
 ├── .staging/         → Temporary manifests and plans (cleaned after write)
 └── [pages].md        → Individual wiki pages (flat namespace)
@@ -138,6 +139,10 @@ Read each source file and produce an **extraction manifest** at
   (capitalized, specific), abbreviations, internal tool names, team
   names, and people. Set the Type field accordingly. The agent will
   route these to entity templates during the Write phase.
+- **Tagging:** do not tag entities with their type name (`person`,
+  `service`, `team`, `project`, `concept`, `glossary`). The `type`
+  frontmatter field already classifies the page. Tags should describe
+  the domain (e.g., `automotive`, `certification`, `ci-cd`).
 
 **Subagent prompt template:**
 
@@ -201,7 +206,21 @@ Write a **reconciliation plan** to `<wiki-root>/.staging/_plan.md`:
 
 ### 5. Write
 
-Execute the reconciliation plan:
+Execute the reconciliation plan.
+
+**Source visibility:** If source files are local working documents
+(personal notes, workspace files, ephemeral paths like `~/...`), omit
+both the `sources:` frontmatter field and the `## Sources` section
+from wiki pages. Source traceability is preserved in `.meta/log.md`
+(git-ignored). Only include visible sources when the source is a
+permanent, shareable reference (URL, git repo, published document).
+
+**Path safety:** Source paths must NEVER be used as wiki-relative
+paths. Wiki pages live in a flat namespace at
+`<wiki-root>/[page-name].md`. Never create directories,
+subdirectories, or files based on source file paths. If a source path
+contains `~`, `..`, or absolute paths, these are references to
+external files — not wiki locations.
 
 #### 5a. Create new pages
 
@@ -234,7 +253,9 @@ with a brief note on why they connect.
 #### 5e. Update index
 
 Add new entries to `<wiki-root>/index.md` under their categories. Keep
-entries alphabetical within categories.
+entries alphabetical within categories. For the `## Glossary` section,
+use the compact format with Full form:
+`- **[TERM]** — Full Form. One-line definition. [→](term.md)`
 
 #### 5f. Update log
 
@@ -256,10 +277,10 @@ python3 scripts/wiki-check.py --wiki-root <path>
 
 Fix any missing backlinks found.
 
-#### 5h. Regenerate tag map
+#### 5h. Regenerate tag map and glossary
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --map --save
+python3 scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
 ### 6. Clean up

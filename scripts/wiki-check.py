@@ -20,7 +20,7 @@ import re
 import sys
 from datetime import datetime
 
-EXCLUDE_FILES = {"index.md", "tags.md"}
+EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
 REQUIRED_FM_FIELDS = ["tags", "sources", "created", "updated"]
 THIN_THRESHOLD = 5
 

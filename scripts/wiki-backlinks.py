@@ -20,7 +20,7 @@ import os
 import re
 from collections import defaultdict
 
-EXCLUDE_FILES = {"index.md", "tags.md"}
+EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
 
 
 def build_title_map(wiki_dir):

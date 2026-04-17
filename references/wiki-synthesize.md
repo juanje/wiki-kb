@@ -204,10 +204,10 @@ Add connection entry in each source page pointing to the new page.
 #### 6b. Update index
 Add new pages under appropriate category.
 
-#### 6c. Regenerate tag map
+#### 6c. Regenerate tag map and glossary
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --map --save
+python3 scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
 #### 6d. Update log

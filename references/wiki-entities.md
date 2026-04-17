@@ -187,6 +187,26 @@ updated: YYYY-MM-DD
 - **New types can be added.** Define a template here, add a `type` value,
   update `wiki-check.py`.
 
+## Tagging guidelines
+
+**Do not use entity types as tags.** The `type` field in frontmatter
+already classifies the page. Tags like `person`, `service`, `team`,
+`project`, `concept`, `glossary` are redundant and pollute synthesis
+heuristics. Tags should describe the **domain** the entity belongs to
+(e.g., `automotive`, `certification`, `ci-cd`), not the entity
+category.
+
+`concept` should never be used as a tag — it is the default page type
+(pages without `type` are concepts).
+
+## Glossary note
+
+Glossary terms should always include a concise one-line definition
+suitable for the consolidated `glossary.md`. For abbreviations, the
+`**Full form:**` line is mandatory. The definition in the page
+summary (first paragraph after the title) should be self-contained —
+it appears verbatim in the glossary artifact.
+
 ## Type-specific extraction hints (for ingest)
 
 - If the source mentions an internal tool name not in the wiki, consider

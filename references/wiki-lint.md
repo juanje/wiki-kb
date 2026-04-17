@@ -138,10 +138,10 @@ Apply auto-fixable issues in order:
      ```
    - E2 (synonym/cross-language) — report only; requires human judgment.
 
-### 6. Regenerate tag map (if fixes applied)
+### 6. Regenerate tag map and glossary (if fixes applied)
 
 ```bash
-python3 scripts/wiki-tags.py --wiki-root <path> --map --save
+python3 scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
 ### 7. Git commit (if fixes applied)
