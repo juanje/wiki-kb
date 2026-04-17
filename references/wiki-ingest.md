@@ -63,6 +63,9 @@ core insight. Useful standalone even if the reader stops here.]
 All section headings are fixed English: `## Key points`, `## Examples`,
 `## Connections`, `## Sources`.
 
+All wiki pages are written directly in `<wiki-root>/` as flat files.
+Never create subdirectories inside the wiki root.
+
 ### Entity pages
 
 When extracting content, watch for entity-type material: proper names,
@@ -215,19 +218,30 @@ from wiki pages. Source traceability is preserved in `.meta/log.md`
 (git-ignored). Only include visible sources when the source is a
 permanent, shareable reference (URL, git repo, published document).
 
-**Path safety:** Source paths must NEVER be used as wiki-relative
-paths. Wiki pages live in a flat namespace at
-`<wiki-root>/[page-name].md`. Never create directories,
-subdirectories, or files based on source file paths. If a source path
-contains `~`, `..`, or absolute paths, these are references to
-external files — not wiki locations.
+**CRITICAL — flat namespace:** The wiki is a flat directory. Every
+file the agent writes MUST go directly into `<wiki-root>/` as
+`<wiki-root>/[page-name].md`. Before writing any file, verify:
+
+1. The target path has **no subdirectories** — only `<wiki-root>/name.md`.
+2. The filename is a **short slug** (lowercase, hyphens) — never a
+   source file path, URL, or directory structure.
+3. **Never run mkdir** inside `<wiki-root>/`. If you find yourself
+   creating directories, STOP — something is wrong.
+
+Source paths (`~/git/repo/docs/file.md`, `../notes/file.md`) are
+**input references**, not output locations. They must never appear as
+part of a wiki file path.
 
 #### 5a. Create new pages
 
-For each "Create" item: write `<wiki-root>/[page-name].md` using the page
-format. If the manifest Type indicates an entity (glossary, service, team,
-project, person), use the corresponding template from
-`references/wiki-entities.md`.
+For each "Create" item: write `<wiki-root>/[page-name].md` — a single
+file directly in the wiki root. The filename is a short descriptive
+slug (e.g., `ostree.md`, `release-process.md`), never derived from the
+source file path.
+
+If the manifest Type indicates an entity (glossary, service, team,
+project, person, process, meeting, repository), use the corresponding
+template from `references/wiki-entities.md`.
 
 Populate from manifest: summary, key points, examples, sources. If the
 manifest has examples, they MUST appear in a dedicated Examples section.
