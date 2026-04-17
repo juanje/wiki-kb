@@ -60,6 +60,26 @@ python3 scripts/wiki-stats.py --wiki-root ~/my-wiki
 python3 scripts/wiki-tags.py --wiki-root ~/my-wiki --search "keyword"
 ```
 
+## Troubleshooting
+
+### Claude Code asks permission to read skill files
+
+Claude Code may prompt for permission when the agent tries to read files from the skill directory (`references/`, `scripts/`). This is a [known issue](https://github.com/anthropics/claude-code/issues/15757) — skills installed outside the project root are treated as external files.
+
+**Fix:** add a permission rule to your Claude Code settings (`~/.claude/settings.json`):
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read(~/.claude/skills/*)"
+    ]
+  }
+}
+```
+
+Adjust the path if your skills are installed elsewhere.
+
 ## License
 
 Apache-2.0
