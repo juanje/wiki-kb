@@ -128,7 +128,7 @@ Read each source file and produce an **extraction manifest** at
 
 ### 1. [Concept name]
 - **Description:** One sentence.
-- **Type:** concept | glossary | service | team | project | person | technique | principle | example-pattern
+- **Type:** concept | glossary | service | team | project | person | process | meeting | repository | article | author | guide | reference | technique | principle | example-pattern
 - **Key points:** (minimum 2-3)
   - [Include reasoning chains, not just conclusions]
 - **Examples from source:** (minimum 1)
@@ -150,12 +150,17 @@ Read each source file and produce an **extraction manifest** at
 - Tag foundational references consistently (authors, domain terms).
 - **Entity detection:** when extracting, watch for proper names
   (capitalized, specific), abbreviations, internal tool names, team
-  names, and people. Set the Type field accordingly. The agent will
-  route these to entity templates during the Write phase.
+  names, and people. Also watch for published articles with clear
+  authorship (→ `article`), intellectual figures referenced across
+  sources (→ `author`), step-by-step technical procedures (→ `guide`),
+  and parameter/syntax/API documentation (→ `reference`). Set the Type
+  field accordingly. The agent will route these to entity templates
+  during the Write phase.
 - **Tagging:** do not tag entities with their type name (`person`,
-  `service`, `team`, `project`, `concept`, `glossary`). The `type`
-  frontmatter field already classifies the page. Tags should describe
-  the domain (e.g., `automotive`, `certification`, `ci-cd`).
+  `service`, `team`, `project`, `concept`, `glossary`, `article`,
+  `author`, `guide`, `reference`). The `type` frontmatter field
+  already classifies the page. Tags should describe the domain
+  (e.g., `automotive`, `certification`, `ci-cd`).
 
 **Subagent prompt template:**
 
@@ -255,8 +260,9 @@ name as a short slug (lowercase, hyphens).
 5. Links to/from other pages use relative paths from the page's location.
 
 If the manifest Type indicates an entity (glossary, service, team,
-project, person, process, meeting, repository), use the corresponding
-template from `references/wiki-entities.md`.
+project, person, process, meeting, repository, article, author, guide,
+reference), use the corresponding template from
+`references/wiki-entities.md`.
 
 Populate from manifest: summary, key points, examples, sources. If the
 manifest has examples, they MUST appear in a dedicated Examples section.

@@ -18,6 +18,10 @@ field in frontmatter and follow a type-specific template. Pages without
 | Has defined steps, trigger, cadence | Process | — |
 | Is a recurring meeting with attendees | Meeting | — |
 | Is a code repository with URL | Repository | — |
+| Is a published piece with author, date, thesis | Article | — |
+| Is an intellectual figure referenced across sources | Author | — |
+| Is a step-by-step technical procedure or tutorial | Guide | — |
+| Documents parameters, syntax, options, or API surface | Reference | — |
 | Describes a pattern, principle, or abstract idea | — | Concept page |
 | Can be instantiated (multiple "instances" exist) | — | Concept page |
 | Has operational metadata (URL, owner, status) | Entity page | — |
@@ -279,6 +283,135 @@ updated: YYYY-MM-DD
 - [Related project](project.md) — [part of this project]
 ```
 
+### Article (`type: article`)
+
+Published articles, blog posts, papers, talks, or any authored piece
+worth referencing as a whole. The article entity captures the piece
+itself; concepts extracted from it become separate concept pages linked
+back via `## Connections`.
+
+```markdown
+---
+tags: [domain-tag]
+type: article
+origin: ingest | conversation | ephemeral
+author: [name or wiki page slug]
+date: YYYY-MM-DD
+publication: [blog name, journal, conference]
+url: [canonical URL, if published online]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+
+# [Article title]
+
+[Abstract/summary — 2-5 sentences capturing the thesis and why it matters]
+
+## Key arguments
+- [Core argument or insight with reasoning chain]
+- [Supporting argument — "because X, therefore Y"]
+
+## Connections
+- [Extracted concept](concept.md) — introduced in this article
+- [Related article](other-article.md) — part of same series / responds to
+- [Author page](author.md) — authored by
+```
+
+### Author (`type: author`)
+
+Intellectual figures, researchers, writers, or thinkers referenced across
+sources. Distinct from `person` (which models teammates and professional
+contacts with `team`, `role`, "How we interact").
+
+```markdown
+---
+tags: [domain-tag]
+type: author
+origin: ingest | conversation | ephemeral
+field: [primary field or discipline]
+url: [homepage, Wikipedia, or ORCID]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+
+# [Author name]
+
+[Who they are — 1-2 sentences: field, key contribution, relevance to the KB]
+
+## Key contributions
+- [Theory, book, framework, or body of work they are known for]
+
+## Connections
+- [Article page](article.md) — authored by
+- [Related concept](concept.md) — originated or influenced
+- [Related author](other-author.md) — collaborator or intellectual predecessor
+```
+
+### Guide (`type: guide`)
+
+Technical procedures, tutorials, and how-tos that a reader follows
+step by step. Distinct from `process` (which models recurring
+organizational workflows like releases or onboarding).
+
+```markdown
+---
+tags: [domain-tag]
+type: guide
+origin: ingest | conversation | ephemeral
+difficulty: beginner | intermediate | advanced
+prerequisites: [list or "none"]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+
+# [Guide title]
+
+[What the reader will accomplish — 1-2 sentences]
+
+## Prerequisites
+- [What is needed before starting]
+
+## Steps
+1. [Step with context and reasoning]
+2. ...
+
+## Connections
+- [Related guide](other-guide.md) — next in sequence / alternative approach
+- [Related concept](concept.md) — explains the theory behind this
+- [Related reference](reference.md) — detailed parameter documentation
+```
+
+### Reference (`type: reference`)
+
+API documentation, CLI references, configuration specs, or any
+content that documents parameters, options, syntax, or fields.
+Content meant to be consulted, not read linearly.
+
+```markdown
+---
+tags: [domain-tag]
+type: reference
+origin: ingest | conversation | ephemeral
+scope: api | cli | config | spec
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+
+# [Reference title]
+
+[What this documents — 1 sentence]
+
+## Specification
+- [Parameters, options, syntax, or fields with descriptions]
+
+## Examples
+- [Usage example with context]
+
+## Connections
+- [Related guide](guide.md) — uses this reference
+- [Related service](service.md) — this is its reference doc
+```
+
 ## Design principles
 
 - **Same lifecycle as concepts.** Entity pages are created through any
@@ -295,11 +428,11 @@ updated: YYYY-MM-DD
 
 **Do not use entity types as tags.** The `type` field in frontmatter
 already classifies the page. Tags like `person`, `service`, `team`,
-`project`, `concept`, `glossary`, `process`, `meeting`, `repository`
-are redundant and pollute synthesis
-heuristics. Tags should describe the **domain** the entity belongs to
-(e.g., `automotive`, `certification`, `ci-cd`), not the entity
-category.
+`project`, `concept`, `glossary`, `process`, `meeting`, `repository`,
+`article`, `author`, `guide`, `reference` are redundant and pollute
+synthesis heuristics. Tags should describe the **domain** the entity
+belongs to (e.g., `automotive`, `certification`, `ci-cd`), not the
+entity category.
 
 `concept` should never be used as a tag — it is the default page type
 (pages without `type` are concepts).
@@ -331,6 +464,18 @@ it appears verbatim in the glossary artifact.
   consider a `meeting` entity page.
 - If the source references a code repository by URL or name, consider a
   `repository` entity page.
+- If the source is a published article, blog post, or paper with a clear
+  author, date, and thesis, consider an `article` entity page alongside
+  the concept pages extracted from it.
+- If the source repeatedly references an intellectual figure (researcher,
+  author, thinker) who appears across multiple sources, consider an
+  `author` entity page. Do not create one for casual mentions.
+- If the source describes a technical procedure or tutorial that a reader
+  follows step by step (install guide, setup walkthrough, how-to),
+  consider a `guide` entity page.
+- If the source documents API parameters, CLI options, configuration
+  fields, or specification details meant for lookup rather than linear
+  reading, consider a `reference` entity page.
 
 ## Type-specific lint checks
 
@@ -343,6 +488,10 @@ it appears verbatim in the glossary artifact.
 - Process pages should have an `owner` or `cadence` field.
 - Meeting pages should have a `cadence` or `day` field.
 - Repository pages should have a `url` or `maintained_by` field.
+- Article pages should have an `author` or `date` field.
+- Author pages should have a `field` field.
+- Guide pages should have a `difficulty` field.
+- Reference pages should have a `scope` field.
 
 ### Required body sections
 
@@ -359,3 +508,7 @@ reported as info-level findings (not auto-fixable):
 | process | `Steps`, `Connections` |
 | meeting | `Attendees`, `Connections` |
 | repository | `Key facts`, `Connections` |
+| article | `Key arguments`, `Connections` |
+| author | `Key contributions`, `Connections` |
+| guide | `Steps`, `Connections` |
+| reference | `Specification`, `Connections` |

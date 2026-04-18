@@ -33,6 +33,10 @@ REQUIRED_SECTIONS = {
     "process":     ["Steps", "Connections"],
     "meeting":     ["Attendees", "Connections"],
     "repository":  ["Key facts", "Connections"],
+    "article":     ["Key arguments", "Connections"],
+    "author":      ["Key contributions", "Connections"],
+    "guide":       ["Steps", "Connections"],
+    "reference":   ["Specification", "Connections"],
 }
 
 

@@ -34,6 +34,7 @@ from wiki_common import EXCLUDE_FILES, WIKI_LINK_RE, list_wiki_pages, resolve_wi
 META_TAGS = {
     "person", "service", "team", "project", "concept", "glossary",
     "process", "meeting", "repository",
+    "article", "author", "guide", "reference",
 }
 
 # Tunable thresholds
