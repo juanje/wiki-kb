@@ -6,6 +6,11 @@ Triggered by "file this", "add this to the wiki", "capture this to wiki",
 or when the user passes a temporary file path with intent to add its
 content to the knowledge base.
 
+Also triggered when an assistant answering questions from the wiki
+synthesizes information from multiple pages into something new — the
+wiki's `AGENTS.md` instructs it to offer filing the answer. If the
+user agrees, this is the procedure to follow.
+
 Handles **ephemeral knowledge** — insights from conversations, verbal
 brain dumps, or temporary notes. For durable source documents (articles,
 interviews), use wiki-ingest instead.

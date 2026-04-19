@@ -9,7 +9,10 @@ Provides common constants and helpers used across all wiki scripts:
 import os
 import re
 
-EXCLUDE_FILES = {"index.md", "tags.md", "glossary.md"}
+EXCLUDE_FILES = {
+    "index.md", "tags.md", "glossary.md",
+    "README.md", "AGENTS.md", "CLAUDE.md",
+}
 
 # Matches markdown links to .md files, including subdirectory paths
 # like [Title](subdir/page.md) or [Title](../other/page.md).
