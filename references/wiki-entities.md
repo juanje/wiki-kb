@@ -426,13 +426,27 @@ updated: YYYY-MM-DD
 
 ## Tagging guidelines
 
+**Aim for 3-5 tags per page.** Tags fuel synthesis heuristics
+(co-occurrence, cross-domain analysis) and thematic navigation.
+Under-tagged pages are invisible to these mechanisms.
+
+**Tag layers:**
+
+| Layer | What to tag |
+|---|---|
+| Core topic | The concept's own domain keyword |
+| Parent domain | Broader field the concept belongs to |
+| Cross-cutting themes | Related domains the concept touches |
+| Named references | Authors or frameworks referenced |
+
+**Concept-name-as-tag rule:** if the page name is `X-in-Y.md` or
+`X-and-Y.md`, both `X` and `Y` should appear as tags.
+
 **Do not use entity types as tags.** The `type` field in frontmatter
 already classifies the page. Tags like `person`, `service`, `team`,
 `project`, `concept`, `glossary`, `process`, `meeting`, `repository`,
 `article`, `author`, `guide`, `reference` are redundant and pollute
-synthesis heuristics. Tags should describe the **domain** the entity
-belongs to (e.g., `automotive`, `certification`, `ci-cd`), not the
-entity category.
+synthesis heuristics.
 
 `concept` should never be used as a tag — it is the default page type
 (pages without `type` are concepts).

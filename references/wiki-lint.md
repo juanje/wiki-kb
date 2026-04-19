@@ -27,6 +27,7 @@ Run all three scripts from the repo root:
 python3 <skill-dir>/scripts/wiki-check.py --wiki-root <path>
 python3 <skill-dir>/scripts/wiki-stats.py --wiki-root <path>
 python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --normalize
+python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --fix-tags
 ```
 
 **Checks covered by `wiki-check.py`:**
@@ -70,9 +71,36 @@ Pages making conflicting claims about the same concept.
 - Report both pages with conflicting passages.
 - No auto-fix — may be intentional (different contexts).
 
-### 3. Connection analysis
+### 3. Tag quality checks
 
-#### 3a. Missing connections
+#### 3a. Under-tagged pages
+
+Detected by `wiki-tags.py --fix-tags`. Pages with fewer than 3 tags
+are under-tagged — they are invisible to co-occurrence heuristics and
+cross-domain analysis.
+
+Suggestions are derived from three sources (in priority order):
+1. **Filename** — concept-name-as-tag rule (`X-in-Y.md` → `X`, `Y`)
+2. **Index category** — the page's category slug
+3. **Connections** — tags shared by 2+ connected pages
+
+- Auto-fixable in fix mode via `wiki-tags.py --fix-tags --apply`.
+  Capped at 4 new tags per page. Updates `updated` date.
+
+#### 3b. Dominant tags (low signal)
+
+Tags appearing in more than 70% of pages add no navigational or
+synthesis value.
+
+- Report tags that exceed this threshold with their page count and
+  percentage.
+- Not auto-fixable — the tag may be correct but too broad. Suggest
+  splitting into more specific subtags or removing from pages where
+  it adds nothing beyond what the category already conveys.
+
+### 4. Connection analysis
+
+#### 4a. Missing connections
 
 Scan page content for mentions of concepts that have wiki pages but
 aren't linked.
@@ -80,14 +108,14 @@ aren't linked.
 - Report the page, mentioned concept, and suggested link.
 - No auto-fix — connection quality matters more than coverage.
 
-#### 3b. Concept gaps
+#### 4b. Concept gaps
 
 Concepts frequently mentioned across pages but without their own page.
 
 - Report the concept, count, and which pages mention it.
 - No auto-fix — suggest running ingest or creating manually.
 
-### 4. Report findings
+### 5. Report findings
 
 **Every check must appear in the report** — "None" confirms execution.
 
@@ -105,6 +133,10 @@ Concepts frequently mentioned across pages but without their own page.
 - Stale content: [list or "None"]
 - Overlapping pages: [list or "None"]
 
+### Tag quality
+- Under-tagged pages (< 3 tags): [list with suggested tags, or "None"]
+- Dominant tags (> 70% of pages): [list with %, or "None"]
+
 ### Suggestions (improvements)
 - Missing backlinks: [count + details, or "None — all bidirectional"]
 - Missing connections: [list or "None"]
@@ -118,7 +150,7 @@ Concepts frequently mentioned across pages but without their own page.
 - Most connected: [name] (N) | Least connected: [name] (N)
 ```
 
-### 5. Apply fixes (if fix mode)
+### 6. Apply fixes (if fix mode)
 
 Apply auto-fixable issues in order:
 
@@ -134,20 +166,24 @@ Apply auto-fixable issues in order:
    and adds reciprocal entries whose description reflects the reverse
    perspective.
 6. **Frontmatter integrity** (2e) — add missing fields.
-7. **Tag normalization** — for each candidate from `--normalize`:
+7. **Under-tagged pages** (3a) — run:
+   ```bash
+   python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --fix-tags --apply
+   ```
+8. **Tag normalization** — for each candidate from `--normalize`:
    - E1 (plural/singular) and E3 (accent variant) are auto-fixable:
      ```bash
      python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --apply-normalize VARIANT CANONICAL
      ```
    - E2 (synonym/cross-language) — report only; requires human judgment.
 
-### 6. Regenerate tag map and glossary (if fixes applied)
+### 7. Regenerate tag map and glossary (if fixes applied)
 
 ```bash
 python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
 ```
 
-### 7. Git commit (if fixes applied)
+### 8. Git commit (if fixes applied)
 
 ```bash
 git add <wiki-root>/ && git commit -m "wiki-lint: YYYY-MM-DD health check"

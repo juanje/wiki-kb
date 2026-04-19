@@ -160,7 +160,24 @@ Read each source file and produce an **extraction manifest** at
 - Capture the author's framing and voice, not a neutral summary.
 - Capture reasoning chains ("because X, therefore Y").
 - Examples are first-class — always extract with sufficient context.
-- Tag foundational references consistently (authors, domain terms).
+- **Tagging depth:** each concept in the manifest should have 3-5
+  tags. Tags serve two purposes: (a) thematic navigation via `tags.md`
+  and (b) synthesis heuristic fuel — under-tagged pages are invisible
+  to co-occurrence and cross-domain analysis.
+
+  | Tag layer | What to tag |
+  |---|---|
+  | Core topic | The concept's own domain keyword |
+  | Parent domain | Broader field the concept belongs to |
+  | Cross-cutting themes | Related domains the concept touches |
+  | Named references | Authors or frameworks referenced |
+
+  **Concept-name-as-tag rule:** if the page name is `X-in-Y.md` or
+  `X-and-Y.md`, both `X` and `Y` should appear as tags. This ensures
+  the tag graph mirrors the concept graph.
+
+  Avoid tags that are too generic to be useful on their own. Avoid
+  tags that duplicate the `type` field (see entity tagging guidelines).
 - **Entity detection:** when extracting, watch for proper names
   (capitalized, specific), abbreviations, internal tool names, team
   names, and people. Also watch for published articles with clear
@@ -169,11 +186,10 @@ Read each source file and produce an **extraction manifest** at
   and parameter/syntax/API documentation (→ `reference`). Set the Type
   field accordingly. The agent will route these to entity templates
   during the Write phase.
-- **Tagging:** do not tag entities with their type name (`person`,
-  `service`, `team`, `project`, `concept`, `glossary`, `article`,
-  `author`, `guide`, `reference`). The `type` frontmatter field
-  already classifies the page. Tags should describe the domain
-  (e.g., `automotive`, `certification`, `ci-cd`).
+- **Tagging exclusions:** do not use entity type names as tags
+  (`person`, `service`, `team`, `project`, `concept`, `glossary`,
+  `article`, `author`, `guide`, `reference`). The `type` frontmatter
+  field already classifies the page.
 
 **Subagent prompt template:**
 

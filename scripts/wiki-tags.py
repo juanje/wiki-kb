@@ -462,6 +462,196 @@ def heuristic_e(pages, tag_index, wiki_dir):
     return sorted(results, key=lambda x: -x["confidence"])
 
 
+MIN_TAGS = 3
+DOMINANT_TAG_THRESHOLD = 0.7
+
+
+def suggest_tags_from_filename(fn):
+    """Derive candidate tags from a page's filename.
+
+    Applies the concept-name-as-tag rule: for filenames like
+    ``X-in-Y.md`` or ``X-and-Y.md``, both X and Y are candidates.
+    """
+    stem = os.path.basename(fn).replace(".md", "")
+    candidates = set()
+    for sep in ("-in-", "-and-", "-vs-", "-as-"):
+        if sep in stem:
+            parts = stem.split(sep, 1)
+            for p in parts:
+                tag = p.strip("-")
+                if tag and tag not in META_TAGS:
+                    candidates.add(tag)
+            return candidates
+    if stem not in META_TAGS:
+        candidates.add(stem)
+    return candidates
+
+
+def suggest_tags_from_connections(fn, graph, pages, tag_index):
+    """Derive candidate tags from connected pages' existing tags.
+
+    Only suggests tags that already exist in the wiki's tag vocabulary
+    and appear in at least 2 connected pages — avoids inventing new tags
+    from arbitrary filename stems.
+    """
+    connected_tags = Counter()
+    for target in graph.get(fn, set()):
+        if target not in pages:
+            continue
+        for tag in pages[target]["tags"]:
+            if tag not in META_TAGS:
+                connected_tags[tag] += 1
+    return {tag for tag, count in connected_tags.items() if count >= 2}
+
+
+def suggest_tags_from_category(fn, page_to_cat):
+    """Derive candidate tag from the page's index category."""
+    cat = page_to_cat.get(fn)
+    if not cat:
+        return set()
+    slug = cat.lower().replace(" ", "-")
+    parts = set()
+    for sep in ("-and-", "-in-"):
+        if sep in slug:
+            for p in slug.split(sep, 1):
+                tag = p.strip("-")
+                if tag and tag not in META_TAGS:
+                    parts.add(tag)
+            return parts
+    if slug not in META_TAGS:
+        parts.add(slug)
+    return parts
+
+
+def compute_tag_suggestions(pages, graph, page_to_cat, tag_index):
+    """Compute tag suggestions for under-tagged pages.
+
+    Returns list of dicts with filename, current_tags, suggested_tags,
+    and the source of each suggestion.
+    """
+    total = len(pages)
+    dominant = {
+        t for t, pgs in tag_index.items()
+        if len(pgs) / total >= DOMINANT_TAG_THRESHOLD
+    } if total > 0 else set()
+
+    results = []
+    for fn, page in sorted(pages.items()):
+        current = set(page["tags"])
+        if len(current) >= MIN_TAGS:
+            continue
+
+        suggestions = {}
+
+        for tag in suggest_tags_from_filename(fn):
+            if tag not in current and tag not in dominant:
+                suggestions[tag] = "filename"
+
+        for tag in suggest_tags_from_connections(fn, graph, pages, tag_index):
+            if tag not in current and tag not in dominant:
+                suggestions.setdefault(tag, "connection")
+
+        for tag in suggest_tags_from_category(fn, page_to_cat):
+            if tag not in current and tag not in dominant:
+                suggestions.setdefault(tag, "category")
+
+        if suggestions:
+            max_new = max(0, (MIN_TAGS + 3) - len(current))
+            priority = ["filename", "category", "connection"]
+            trimmed = {}
+            for source in priority:
+                for tag, src in sorted(suggestions.items()):
+                    if src == source and len(trimmed) < max_new:
+                        trimmed[tag] = src
+            suggestions = trimmed
+
+        if suggestions:
+            results.append({
+                "filename": fn,
+                "current_tags": sorted(current),
+                "current_count": len(current),
+                "suggested_tags": suggestions,
+            })
+
+    return results
+
+
+def compute_dominant_tags(tag_index, total_pages):
+    """Find tags that appear in more than DOMINANT_TAG_THRESHOLD of pages."""
+    if total_pages == 0:
+        return []
+    results = []
+    for tag, pgs in sorted(tag_index.items(), key=lambda x: -len(x[1])):
+        ratio = len(pgs) / total_pages
+        if ratio >= DOMINANT_TAG_THRESHOLD:
+            results.append({
+                "tag": tag,
+                "page_count": len(pgs),
+                "percentage": round(ratio * 100, 1),
+            })
+    return results
+
+
+def apply_tag_suggestions(suggestions, wiki_dir):
+    """Add suggested tags to under-tagged pages.
+
+    Returns list of modified filenames.
+    """
+    modified = []
+    today = __import__("datetime").date.today().isoformat()
+    for item in suggestions:
+        path = os.path.join(wiki_dir, item["filename"])
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        new_tags = sorted(set(item["current_tags"]) | set(item["suggested_tags"].keys()))
+        tags_str = ", ".join(new_tags)
+        new_content = re.sub(
+            r"^tags:\s*\[.*?\]",
+            f"tags: [{tags_str}]",
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+        new_content = re.sub(
+            r"^updated:\s*.+",
+            f"updated: {today}",
+            new_content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+        if new_content != content:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(new_content)
+            modified.append(item["filename"])
+    return modified
+
+
+def fmt_fix_tags(suggestions, dominant):
+    """Format fix-tags output for human-readable display."""
+    lines = []
+
+    if dominant:
+        lines.append(f"\n=== DOMINANT TAGS (>{DOMINANT_TAG_THRESHOLD*100:.0f}% of pages) ===")
+        for d in dominant:
+            lines.append(f"  {d['tag']}: {d['page_count']} pages ({d['percentage']}%)")
+        lines.append("  (not auto-fixed — review manually)")
+    else:
+        lines.append("\n=== DOMINANT TAGS ===")
+        lines.append("  None")
+
+    lines.append(f"\n=== UNDER-TAGGED PAGES (<{MIN_TAGS} tags) ===")
+    if not suggestions:
+        lines.append("  None — all pages have sufficient tags")
+    else:
+        for item in suggestions:
+            lines.append(f"  {item['filename']} ({item['current_count']} tags: {', '.join(item['current_tags'])})")
+            for tag, source in sorted(item["suggested_tags"].items()):
+                lines.append(f"    + {tag} (from {source})")
+        lines.append(f"  Total: {len(suggestions)} pages need tag enrichment")
+
+    return "\n".join(lines)
+
+
 def apply_tag_normalization(canonical, variant, wiki_dir):
     """Replace all occurrences of variant tag with canonical in wiki pages.
 
@@ -929,6 +1119,14 @@ def main():
         help=f"Number of top glossary entries for index section (default: {GLOSSARY_TOP_N})"
     )
     parser.add_argument(
+        "--fix-tags", action="store_true",
+        help="Detect under-tagged pages and dominant tags. Use with --apply to fix."
+    )
+    parser.add_argument(
+        "--apply", action="store_true",
+        help="Apply suggested fixes (use with --fix-tags to add missing tags)"
+    )
+    parser.add_argument(
         "--search", metavar="QUERY",
         help="Search wiki pages by keyword relevance (accent-insensitive)"
     )
@@ -939,7 +1137,8 @@ def main():
     args = parser.parse_args()
 
     if not any([args.map, args.candidates, args.full, args.summaries, args.save,
-                args.normalize, args.apply_normalize, args.search, args.glossary]):
+                args.normalize, args.apply_normalize, args.search, args.glossary,
+                args.fix_tags]):
         parser.print_help()
         sys.exit(0)
 
@@ -965,6 +1164,28 @@ def main():
 
     if run_map:
         output["tag_map"] = generate_tag_map(pages, tag_index)
+
+    if args.fix_tags:
+        suggestions = compute_tag_suggestions(pages, graph, page_to_cat, tag_index)
+        dominant = compute_dominant_tags(tag_index, len(pages))
+        if args.json:
+            print(json.dumps({"suggestions": suggestions, "dominant": dominant},
+                              indent=2, ensure_ascii=False))
+            if args.apply:
+                apply_tag_suggestions(suggestions, wiki_dir)
+            return
+        if args.apply and suggestions:
+            modified = apply_tag_suggestions(suggestions, wiki_dir)
+            print(fmt_fix_tags(suggestions, dominant))
+            print(f"\nApplied: {len(modified)} file(s) updated")
+            pages = load_wiki(wiki_dir)
+            tag_index = build_tag_index(pages)
+            tags_path, json_path = write_tag_artifacts(pages, tag_index, wiki_dir)
+            print(f"Updated: {tags_path}")
+            print(f"Updated: {json_path}")
+        else:
+            print(fmt_fix_tags(suggestions, dominant))
+        return
 
     if args.search is not None:
         search_results = search_pages(args.search, pages, top_n=args.top)
