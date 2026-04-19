@@ -8,7 +8,9 @@ for wiki processing.
 
 Use "force ingest" or "re-ingest" to bypass the log filter and re-process
 files that were already ingested — useful when a source was updated, the
-skill improved, or you want finer extraction.
+skill improved, or you want finer extraction. Re-ingestion is a normal
+part of the workflow, not a fix: dense sources often yield additional
+concepts on a second pass.
 
 ## Inputs
 
@@ -142,7 +144,18 @@ Read each source file and produce an **extraction manifest** at
 
 **Extraction guidelines:**
 
-- 5-8 concepts per dense article; fewer for meta/recap content.
+- Scale extraction depth to the source density:
+
+  | Source type | Concepts |
+  |---|---|
+  | Light content (recap, meta, short post) | 2-4 |
+  | Standard article | 5-8 |
+  | Dense or long article (multiple themes, rich examples) | 8-15 |
+  | Exhaustive source (book chapter, comprehensive guide) | 15+ |
+
+  When in doubt, extract more rather than fewer — a concept with 2+
+  key points of its own deserves a page. Under-extraction loses
+  connections; over-extraction is caught during Reconcile (Absorb).
 - Each concept is **atomic** — one coherent topic per entry.
 - Capture the author's framing and voice, not a neutral summary.
 - Capture reasoning chains ("because X, therefore Y").
