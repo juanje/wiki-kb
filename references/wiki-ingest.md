@@ -136,6 +136,9 @@ Read each source file and produce an **extraction manifest** at
 - **Examples from source:** (minimum 1)
   - [Concrete, with enough context to stand alone]
 - **Related concepts:** [names of related concepts]
+- **Contradictions:** [if this concept contradicts an existing wiki page,
+  note: which page, what it claims, and what this source claims instead.
+  Omit this field if no contradiction detected.]
 
 ## Cross-references detected
 - **Internal links in source:** [list]
@@ -178,6 +181,11 @@ Read each source file and produce an **extraction manifest** at
 
   Avoid tags that are too generic to be useful on their own. Avoid
   tags that duplicate the `type` field (see entity tagging guidelines).
+- **Contradiction detection:** when a source makes a claim that
+  conflicts with an existing wiki page, record it in the manifest's
+  Contradictions field. During Write, the contradiction is preserved
+  in the page — not silently overwritten. Both positions are kept with
+  their source attribution so the reader can evaluate them.
 - **Entity detection:** when extracting, watch for proper names
   (capitalized, specific), abbreviations, internal tool names, team
   names, and people. Also watch for published articles with clear
@@ -242,6 +250,10 @@ Write a **reconciliation plan** to `<wiki-root>/.staging/_plan.md`:
 
 ## Absorb
 1. **[concept]** → into **[existing-page].md** — [as what].
+
+## Contradictions
+1. **[existing-page].md** — [existing claim] vs [new source claim].
+   Source: [source file]. Action: add both positions to the page.
 
 ## Backlinks to add
 1. **[page-a].md** ↔ **[page-b].md** — [reason]
@@ -309,19 +321,34 @@ For each "Enrich" item:
 
 Add as bullet, example, or subsection in the target page. Update frontmatter.
 
-#### 5d. Add backlinks
+#### 5d. Record contradictions
+
+For each "Contradictions" item in the plan:
+
+1. Read the existing page.
+2. Add a `## Contradictions` section (or append to it if it exists).
+3. Record both positions with source attribution:
+   ```
+   **[Existing claim summary]** (source: [original source])
+   vs **[New claim summary]** (source: [new source])
+   ```
+4. Do not remove the original claim from Key points — both coexist
+   until a human resolves the contradiction.
+5. Update `updated` date in frontmatter.
+
+#### 5e. Add backlinks
 
 Bidirectional — both pages get a connection entry in `## Connections`
 with a brief note on why they connect.
 
-#### 5e. Update index
+#### 5f. Update index
 
 Add new entries to `<wiki-root>/index.md` under their categories. Keep
 entries alphabetical within categories. For the `## Glossary` section,
 use the compact format with Full form:
 `- **[TERM]** — Full Form. One-line definition. [→](term.md)`
 
-#### 5f. Update log
+#### 5g. Update log
 
 Append today's ingestion record to `<wiki-root>/.meta/log.md`.
 
@@ -333,7 +360,7 @@ Append today's ingestion record to `<wiki-root>/.meta/log.md`.
   - Index: added N entries under "Category"
 ```
 
-#### 5g. Cross-referencing pass
+#### 5h. Cross-referencing pass
 
 ```bash
 python3 <skill-dir>/scripts/wiki-check.py --wiki-root <path>
@@ -341,7 +368,7 @@ python3 <skill-dir>/scripts/wiki-check.py --wiki-root <path>
 
 Fix any missing backlinks found.
 
-#### 5h. Regenerate tag map and glossary
+#### 5i. Regenerate tag map and glossary
 
 ```bash
 python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --map --glossary --save
@@ -364,4 +391,6 @@ git add <wiki-root>/ && git commit -m "wiki: ingest [source description]"
 - **Connections earn their place** — every backlink explains *why*.
 - **Examples are first-class** — not optional filler.
 - **Index is navigable** — find any concept in < 3 seconds.
+- **Contradictions are explicit** — never silently overwrite a claim.
+  Both positions live in the page with source attribution.
 - **Incremental integrity** — no broken links, orphans, or ghost entries.

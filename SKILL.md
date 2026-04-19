@@ -61,6 +61,10 @@ For questions like "what is X?", "who owns Y?", "what team is Z on?":
 1. Read `<wiki-root>/index.md` (categories + top glossary terms) and `<wiki-root>/glossary.md` (all terms with definitions). For tag-based lookup, also read `<wiki-root>/tags.md`.
 2. Read the matching page(s) and answer from their content.
 3. If navigation is insufficient, use `python3 <skill-dir>/scripts/wiki-tags.py --wiki-root <path> --search "keywords"` as fallback.
+4. If the answer required synthesizing information not already in a
+   single wiki page, offer to file it: "This answer combines knowledge
+   from several pages — would you like me to save it as a wiki page?"
+   If the user agrees, follow `references/wiki-file.md`.
 
 No reference file needed — the wiki's own structure supports direct lookup.
 
