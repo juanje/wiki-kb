@@ -23,7 +23,7 @@ concepts on a second pass.
 
 ```
 <wiki-root>/
-├── index.md          → Categorized list of all pages (includes top glossary terms)
+├── index.md          → Categorized list of all pages
 ├── tags.md           → Thematic navigation (by tag)
 ├── glossary.md       → All glossary terms — full form + definition (generated)
 ├── .meta/log.md      → Ingestion history (git-ignored)
@@ -344,9 +344,8 @@ with a brief note on why they connect.
 #### 5f. Update index
 
 Add new entries to `<wiki-root>/index.md` under their categories. Keep
-entries alphabetical within categories. For the `## Glossary` section,
-use the compact format with Full form:
-`- **[TERM]** — Full Form. One-line definition. [→](term.md)`
+entries alphabetical within categories. Do not add glossary terms to
+the index — they are maintained automatically in `glossary.md`.
 
 #### 5g. Update log
 

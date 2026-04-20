@@ -749,9 +749,6 @@ def write_tag_artifacts(pages, tag_index, wiki_dir):
 # Glossary artifact
 # ---------------------------------------------------------------------------
 
-GLOSSARY_TOP_N = 15
-
-
 def _glossary_definition(content):
     """Extract the definition paragraph from a glossary page.
 
@@ -784,8 +781,7 @@ def build_glossary(pages, graph):
     """Collect glossary entries from pages with type: glossary.
 
     Each entry includes title, filename, full_form, definition, and
-    incoming_links (how many other pages link to this glossary page).
-    Entries are sorted by incoming link count descending.
+    incoming_links. Entries are sorted alphabetically by title.
     """
     incoming = Counter()
     for _fn, targets in graph.items():
@@ -803,19 +799,15 @@ def build_glossary(pages, graph):
             "definition": _glossary_definition(page["_content"]),
             "incoming_links": incoming.get(fn, 0),
         })
-    entries.sort(key=lambda e: -e["incoming_links"])
+    entries.sort(key=lambda e: e["title"].lower())
     return entries
 
 
-def write_glossary_artifact(pages, graph, wiki_dir, top_n=GLOSSARY_TOP_N):
-    """Write glossary.md with all glossary entries.
-
-    Returns (glossary_path, top_entries) where top_entries are the top N
-    entries suitable for inclusion in the index Glossary section.
-    """
+def write_glossary_artifact(pages, graph, wiki_dir):
+    """Write glossary.md with all glossary entries sorted alphabetically."""
     entries = build_glossary(pages, graph)
     if not entries:
-        return None, []
+        return None
 
     lines = [
         "# Glossary",
@@ -833,7 +825,7 @@ def write_glossary_artifact(pages, graph, wiki_dir, top_n=GLOSSARY_TOP_N):
     with open(glossary_path, "w", encoding="utf-8") as f:
         f.write(glossary_md)
 
-    return glossary_path, entries[:top_n]
+    return glossary_path
 
 
 def _full_form_suffix(title, full_form):
@@ -845,13 +837,10 @@ def _full_form_suffix(title, full_form):
     return f" ({full_form})"
 
 
-def fmt_glossary(entries, top_n=GLOSSARY_TOP_N):
+def fmt_glossary(entries):
     """Format glossary entries for human-readable output."""
-    lines = [f"\n=== GLOSSARY ({len(entries)} terms, top {top_n} shown) ==="]
-    for i, e in enumerate(entries):
-        if i >= top_n:
-            lines.append(f"\n  ... +{len(entries) - top_n} more (see glossary.md)")
-            break
+    lines = [f"\n=== GLOSSARY ({len(entries)} terms, alphabetical) ==="]
+    for e in entries:
         full = _full_form_suffix(e["title"], e["full_form"])
         lines.append(f"  {e['filename']}: {e['title']}{full}  [{e['incoming_links']} incoming]")
     return "\n".join(lines)
@@ -1115,10 +1104,6 @@ def main():
         help="Show glossary entries (type: glossary pages). Use with --save to write glossary.md"
     )
     parser.add_argument(
-        "--glossary-top", type=int, default=GLOSSARY_TOP_N,
-        help=f"Number of top glossary entries for index section (default: {GLOSSARY_TOP_N})"
-    )
-    parser.add_argument(
         "--fix-tags", action="store_true",
         help="Detect under-tagged pages and dominant tags. Use with --apply to fix."
     )
@@ -1238,9 +1223,7 @@ def main():
         print(f"Written: {tags_path}")
         print(f"Written: {json_path}")
         if args.glossary or args.full:
-            gloss_path, _top = write_glossary_artifact(
-                pages, graph, wiki_dir, top_n=args.glossary_top,
-            )
+            gloss_path = write_glossary_artifact(pages, graph, wiki_dir)
             if gloss_path:
                 print(f"Written: {gloss_path}")
 
@@ -1262,7 +1245,7 @@ def main():
         print(fmt_stats(pages, tag_index, output.get("candidates", {})))
 
     if "glossary" in output:
-        print(fmt_glossary(output["glossary"], top_n=args.glossary_top))
+        print(fmt_glossary(output["glossary"]))
 
     if "summaries" in output:
         print(fmt_summaries(output["summaries"]))
