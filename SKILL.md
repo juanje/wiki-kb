@@ -18,7 +18,7 @@ metadata:
   version: "1.0.0"
   authors: juanje
   tags: "knowledge-base, wiki, markdown, local"
-  repository: https://gitlab.com/juanjeojeda/wiki-kb
+  repository: https://github.com/juanje/wiki-kb
 ---
 
 # wiki-kb
