@@ -37,6 +37,23 @@ REQUIRED_SECTIONS = {
     "author":      ["Key contributions", "Connections"],
     "guide":       ["Steps", "Connections"],
     "reference":   ["Specification", "Connections"],
+    "codebase":    ["Architecture", "Components", "Connections"],
+    "component":   ["Key interfaces", "Connections"],
+}
+
+REQUIRED_ENTITY_FM = {
+    "service":     ["url", "maintained_by"],
+    "project":     ["status"],
+    "person":      ["team"],
+    "process":     ["owner", "cadence"],
+    "meeting":     ["cadence", "day"],
+    "repository":  ["url", "maintained_by"],
+    "article":     ["author", "date"],
+    "author":      ["field"],
+    "guide":       ["difficulty"],
+    "reference":   ["scope"],
+    "codebase":    ["repo"],
+    "component":   ["codebase"],
 }
 
 
@@ -266,6 +283,30 @@ def check_stale_content(wiki_dir, pages):
     return stale
 
 
+def check_entity_frontmatter(wiki_dir, pages):
+    """Check that entity pages have their type-specific frontmatter fields.
+
+    Uses OR logic: at least one of the listed fields must be present.
+    """
+    issues = []
+    for p in sorted(pages):
+        with open(os.path.join(wiki_dir, p)) as f:
+            content = f.read()
+        fields = parse_frontmatter(content)
+        page_type = fields.get("_type")
+        if not page_type or page_type not in REQUIRED_ENTITY_FM:
+            continue
+        fm_match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
+        if not fm_match:
+            continue
+        fm_text = fm_match.group(1)
+        expected = REQUIRED_ENTITY_FM[page_type]
+        present = [f for f in expected if re.search(rf"^{f}:", fm_text, re.MULTILINE)]
+        if not present:
+            issues.append({"page": p, "type": page_type, "expected_one_of": expected})
+    return issues
+
+
 def check_entity_sections(wiki_dir, pages):
     """Check that entity pages have their type-specific required sections."""
     issues = []
@@ -300,6 +341,7 @@ def run_all_checks(wiki_dir):
         "isolated_pages": check_isolated_pages(graph),
         "stale_content": check_stale_content(wiki_dir, actual_pages),
         "entity_sections": check_entity_sections(wiki_dir, actual_pages),
+        "entity_frontmatter": check_entity_frontmatter(wiki_dir, actual_pages),
     }
     return results
 
@@ -369,6 +411,12 @@ def format_report(results):
         results["entity_sections"],
         lambda x: f"{x['page']} ({x['type']}): missing {x['missing_sections']}",
         "All entity pages have their required sections",
+    )
+    section(
+        "MISSING ENTITY FRONTMATTER",
+        results["entity_frontmatter"],
+        lambda x: f"{x['page']} ({x['type']}): needs one of {x['expected_one_of']}",
+        "All entity pages have their type-specific frontmatter",
     )
 
     return "\n".join(lines)

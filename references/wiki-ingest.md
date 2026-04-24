@@ -130,7 +130,7 @@ Read each source file and produce an **extraction manifest** at
 
 ### 1. [Concept name]
 - **Description:** One sentence.
-- **Type:** concept | glossary | service | team | project | person | process | meeting | repository | article | author | guide | reference | technique | principle | example-pattern
+- **Type:** concept | glossary | service | team | project | person | process | meeting | repository | article | author | guide | reference | codebase | component | technique | principle | example-pattern
 - **Key points:** (minimum 2-3)
   - [Include reasoning chains, not just conclusions]
 - **Examples from source:** (minimum 1)
@@ -155,6 +155,7 @@ Read each source file and produce an **extraction manifest** at
   | Standard article | 5-8 |
   | Dense or long article (multiple themes, rich examples) | 8-15 |
   | Exhaustive source (book chapter, comprehensive guide) | 15+ |
+  | Codebase documentation (CODEBASE.md) | Hub page + 8-20 component/concept pages |
 
   When in doubt, extract more rather than fewer — a concept with 2+
   key points of its own deserves a page. Under-extraction loses
@@ -196,8 +197,15 @@ Read each source file and produce an **extraction manifest** at
   during the Write phase.
 - **Tagging exclusions:** do not use entity type names as tags
   (`person`, `service`, `team`, `project`, `concept`, `glossary`,
-  `article`, `author`, `guide`, `reference`). The `type` frontmatter
+  `article`, `author`, `guide`, `reference`, `codebase`,
+  `component`). The `type` frontmatter
   field already classifies the page.
+
+**Diagram and table preservation:** when sources contain Mermaid
+diagrams, ASCII diagrams, or structured tables, preserve them verbatim
+in the wiki pages. Place each in the most relevant page (hub
+Architecture section, or the specific component page). They are dense
+information that loses value when converted to prose.
 
 **Subagent prompt template:**
 
@@ -206,6 +214,46 @@ Read each source file and produce an **extraction manifest** at
 > `<wiki-root>/.staging/[filename]-manifest.md` following the manifest
 > format in `references/wiki-ingest.md`. Return a one-line summary of
 > concepts extracted.
+
+#### Codebase documentation sources
+
+When the source is codebase documentation (a `CODEBASE.md` or similar
+architecture document for a software project), follow these additional
+rules:
+
+**Always create a `codebase` hub page** as the first concept in the
+manifest. This is the narrative anchor — the page that preserves the
+architecture story and connects all extracted pages together. Use
+`type: codebase` in the manifest.
+
+**Required hub fields:** the hub page needs a repository URL (`repo`
+in frontmatter). If the source document does not contain a repo URL,
+the agent **MUST ask the user** before writing the hub page. Do not
+leave the `repo` field empty or guess.
+
+**Decomposition guidance** — how to break down a codebase document:
+
+| Source section | Wiki target |
+|---|---|
+| Architecture overview, design philosophy | Hub page `## Architecture` section (preserve diagrams) |
+| Components with own interfaces/design notes | `component` entity pages (one per significant module) |
+| Design patterns, architectural decisions | `concept` pages (only if transferable beyond this project) |
+| Development guide, setup instructions | `guide` entity page |
+| Glossary terms (tools, protocols, domain jargon) | `glossary` entity pages |
+| Gotchas, critical paths | Absorb into relevant component pages, or standalone `concept` if broadly applicable |
+| External integrations, dependencies | Absorb into hub page or relevant component pages |
+| Data flow diagrams | Hub page `## Architecture` section |
+
+**Hub page absorbs narrative:** the hub `## Architecture` section
+preserves how components interact, data flows, and overall design
+philosophy. This is the context lost when splitting into atomic pages.
+The `## Components` section links to each component page with a
+one-line description of its role.
+
+**Repository page upgrade:** if a `repository` page already exists in
+the wiki for the same repo URL, the `codebase` page replaces it
+(richer superset). Migrate any existing connections from the
+repository page, then remove it from the wiki and index.
 
 ### 3. Consolidate (multi-document only)
 
