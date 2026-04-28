@@ -151,13 +151,13 @@ def load_wiki(wiki_dir):
         pages[fn] = {
             "filename": fn,
             "title": get_page_title(content),
-            "tags": fm["tags"],
+            "tags": fm.get("tags", []),
             "type": fm.get("type"),
-            "sources": fm["sources"],
-            "origin": fm["origin"],
-            "synthesis_sources": fm["synthesis_sources"],
-            "created": fm["created"],
-            "updated": fm["updated"],
+            "sources": fm.get("sources", []),
+            "origin": fm.get("origin"),
+            "synthesis_sources": fm.get("synthesis_sources", []),
+            "created": fm.get("created"),
+            "updated": fm.get("updated"),
             "content_lines": count_content_lines(content),
             "_content": content,
         }
@@ -928,11 +928,11 @@ def generate_summaries(filenames, wiki_dir):
         results.append({
             "filename": fn,
             "title": get_page_title(content),
-            "tags": fm["tags"],
+            "tags": fm.get("tags", []),
             "summary": get_page_summary(content),
             "connections": get_page_connections(content, fn),
             "content_lines": count_content_lines(content),
-            "origin": fm["origin"],
+            "origin": fm.get("origin"),
         })
     return results
 
