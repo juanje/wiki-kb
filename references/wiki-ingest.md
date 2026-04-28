@@ -356,6 +356,34 @@ reference), use the corresponding template from
 Populate from manifest: summary, key points, examples, sources. If the
 manifest has examples, they MUST appear in a dedicated Examples section.
 
+**Subagent strategy:** When the plan has 10+ Create items, split into
+batches by category and use parallel subagents. Use this prompt template:
+
+> Read `<wiki-root>/.staging/_consolidated.md` and
+> `<wiki-root>/.staging/_plan.md`.
+>
+> Create the following pages from the plan: [list of page names].
+> Write them to `<wiki-root>/<category-slug>/`.
+>
+> Every page MUST start with a YAML frontmatter block. Required fields:
+>
+> ```
+> ---
+> tags: [tag1, tag2]
+> created: YYYY-MM-DD
+> updated: YYYY-MM-DD
+> origin: ingest
+> ---
+> ```
+>
+> Additional frontmatter fields by page kind:
+> - Entity pages (glossary, service, component, etc.): add `type: <entity-type>`
+> - Pages ingested from a permanent source: add `sources:` with the source path
+>
+> Follow the page format in `references/wiki-ingest.md`. For entity types,
+> use templates from `references/wiki-entities.md`.
+> Return count of pages created.
+
 #### 5b. Enrich existing pages
 
 For each "Enrich" item:
