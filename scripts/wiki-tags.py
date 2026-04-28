@@ -146,6 +146,8 @@ def load_wiki(wiki_dir):
         with open(os.path.join(wiki_dir, fn), encoding="utf-8") as f:
             content = f.read()
         fm = parse_frontmatter(content)
+        if not fm:
+            continue
         pages[fn] = {
             "filename": fn,
             "title": get_page_title(content),
