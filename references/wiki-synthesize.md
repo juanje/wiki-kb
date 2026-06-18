@@ -118,6 +118,9 @@ Read full text of implicated pages for confirmed candidates.
 
 ```markdown
 ---
+type: concept
+description: >-
+  One-sentence summary of the emergent pattern this synthesis captures.
 tags: [tag1, tag2]
 origin: synthesis
 synthesis_sources: [page1.md, page2.md, page3.md]
@@ -149,6 +152,9 @@ key properties. If pages only mention the term in passing, skip.
 
 ```markdown
 ---
+type: concept
+description: >-
+  One-sentence definition of this foundational concept.
 tags: [tag1, tag2]
 origin: foundational
 synthesis_sources: [page1.md, page2.md, page3.md]
@@ -174,6 +180,9 @@ updated: YYYY-MM-DD
 
 ```markdown
 ---
+type: author
+description: >-
+  One-sentence summary of who this author is and their relevance.
 tags: [author-name, relevant-domain-tags]
 origin: foundational
 synthesis_sources: [page1.md, page2.md, page3.md]

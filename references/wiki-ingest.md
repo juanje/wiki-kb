@@ -45,6 +45,9 @@ paths (e.g. `../other-category/page.md`). Root files (`index.md`,
 
 ```markdown
 ---
+type: concept
+description: >-
+  One-sentence summary of what this concept is and why it matters.
 tags: [tag1, tag2]
 sources:
   - path/to/source-document.md
@@ -74,6 +77,11 @@ core insight. Useful standalone even if the reader stops here.]
 
 All section headings are fixed English: `## Key points`, `## Examples`,
 `## Connections`, `## Sources`.
+
+- `type` — always present. Use `concept` for regular pages; entity
+  pages use their specific type (glossary, service, etc.).
+- `description` — one sentence, extracted from the summary paragraph.
+  Enables index generation and search without reading the full body.
 
 Each page is one concept. The filename is the concept name as a slug:
 `<wiki-root>/category-slug/concept-name.md`.
@@ -369,6 +377,9 @@ batches by category and use parallel subagents. Use this prompt template:
 >
 > ```
 > ---
+> type: concept
+> description: >-
+>   One-sentence summary of what this concept is.
 > tags: [tag1, tag2]
 > created: YYYY-MM-DD
 > updated: YYYY-MM-DD
@@ -377,7 +388,7 @@ batches by category and use parallel subagents. Use this prompt template:
 > ```
 >
 > Additional frontmatter fields by page kind:
-> - Entity pages (glossary, service, component, etc.): add `type: <entity-type>`
+> - Entity pages (glossary, service, component, etc.): use `type: <entity-type>` instead of `concept`
 > - Pages ingested from a permanent source: add `sources:` with the source path
 >
 > Follow the page format in `references/wiki-ingest.md`. For entity types,

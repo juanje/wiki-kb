@@ -99,6 +99,10 @@ Each reference file documents which scripts to use and when.
   (ingestion log with local paths). It must be in `.gitignore`.
 - **Every write operation ends with a git commit.** If the wiki is not
   a git repo, the operation is incomplete.
+- **Every page has `type` and `description`.** `type` classifies the
+  page (`concept` for regular pages, or a specific entity type).
+  `description` is a one-sentence summary for index generation and
+  search. Both are required frontmatter fields.
 - **Entity type names are not tags.** Don't tag pages with `person`,
   `service`, `team`, etc. — the `type` frontmatter field handles that.
   Tags describe domain topics.

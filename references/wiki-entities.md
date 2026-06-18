@@ -5,9 +5,9 @@
 Load this reference alongside the active operation reference (ingest,
 file, synthesize) when creating or processing entity-type content.
 
-Entity pages use the same base format as concept pages but add a `type`
-field in frontmatter and follow a type-specific template. Pages without
-`type` are regular concept pages — backward-compatible.
+Entity pages use the same base format as concept pages but use a
+specific `type` value in frontmatter and follow a type-specific
+template. Regular concept pages use `type: concept`.
 
 ## Entity vs concept — decision heuristic
 
@@ -36,8 +36,10 @@ Terms, abbreviations, and acronyms used internally.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: glossary
+description: >-
+  One-sentence definition of this term.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -65,8 +67,10 @@ Internal services, tools, platforms, and systems.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: service
+description: >-
+  One-sentence summary of what this service does.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 url: [primary URL, if applicable]
 maintained_by: [team or person, if known]
@@ -97,8 +101,10 @@ Teams, squads, or organizational units.
 
 ```markdown
 ---
-tags: [org-tag]
 type: team
+description: >-
+  One-sentence summary of what this team does.
+tags: [org-tag]
 origin: ingest | conversation | ephemeral
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -128,8 +134,10 @@ Projects, initiatives, or epics.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: project
+description: >-
+  One-sentence summary of this project's goal.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 status: active | completed | paused | cancelled
 jira: [VROOM-XXXXX or Epic link, if applicable]
@@ -159,8 +167,10 @@ People the user works with regularly.
 
 ```markdown
 ---
-tags: [org-tag]
 type: person
+description: >-
+  One-sentence summary of who this person is and their role.
+tags: [org-tag]
 origin: ingest | conversation | ephemeral
 team: [team name]
 role: [job title or functional role]
@@ -191,8 +201,10 @@ campaigns, onboarding, incident response.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: process
+description: >-
+  One-sentence summary of what this process accomplishes.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 owner: [team or person responsible]
 cadence: [frequency — e.g., "biweekly", "per release", "on demand"]
@@ -226,8 +238,10 @@ Recurring meetings with cadence, purpose, and participants.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: meeting
+description: >-
+  One-sentence summary of this meeting's purpose.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 owner: [person who leads/organizes]
 cadence: [e.g., "weekly", "biweekly", "monthly"]
@@ -257,8 +271,10 @@ Code repositories with URL, ownership, and purpose.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: repository
+description: >-
+  One-sentence summary of what this repository contains.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 url: [repository URL]
 maintained_by: [team or person]
@@ -294,8 +310,10 @@ back via `## Connections`.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: article
+description: >-
+  One-sentence summary of this article's thesis.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 author: [name or wiki page slug]
 date: YYYY-MM-DD
@@ -327,8 +345,10 @@ contacts with `team`, `role`, "How we interact").
 
 ```markdown
 ---
-tags: [domain-tag]
 type: author
+description: >-
+  One-sentence summary of who this author is and their relevance.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 field: [primary field or discipline]
 url: [homepage, Wikipedia, or ORCID]
@@ -357,8 +377,10 @@ organizational workflows like releases or onboarding).
 
 ```markdown
 ---
-tags: [domain-tag]
 type: guide
+description: >-
+  One-sentence summary of what the reader will accomplish.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 difficulty: beginner | intermediate | advanced
 prerequisites: [list or "none"]
@@ -391,8 +413,10 @@ Content meant to be consulted, not read linearly.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: reference
+description: >-
+  One-sentence summary of what this documents.
+tags: [domain-tag]
 origin: ingest | conversation | ephemeral
 scope: api | cli | config | spec
 created: YYYY-MM-DD
@@ -425,8 +449,10 @@ initiatives) and `repository` (lightweight pointer — URL + owner).
 
 ```markdown
 ---
-tags: [domain-tag]
 type: codebase
+description: >-
+  One-sentence summary of what this project is and its purpose.
+tags: [domain-tag]
 origin: ingest
 repo: [repository URL — REQUIRED, ask user if not in source]
 language: [primary language]
@@ -469,8 +495,10 @@ design notes worth documenting — not every file or class.
 
 ```markdown
 ---
-tags: [domain-tag]
 type: component
+description: >-
+  One-sentence summary of this component's responsibility.
+tags: [domain-tag]
 origin: ingest
 codebase: [parent codebase page slug]
 location: [file path(s) in the repo]

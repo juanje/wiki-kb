@@ -21,7 +21,7 @@ import sys
 from datetime import datetime
 
 from wiki_common import EXCLUDE_FILES, WIKI_LINK_RE, list_wiki_pages, resolve_wiki_link
-REQUIRED_FM_FIELDS = ["tags", "sources", "created", "updated"]
+REQUIRED_FM_FIELDS = ["type", "description", "tags", "sources", "created", "updated"]
 THIN_THRESHOLD = 5
 
 REQUIRED_SECTIONS = {

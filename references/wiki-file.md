@@ -33,6 +33,9 @@ Same body structure as ingest pages. Frontmatter differs:
 
 ```markdown
 ---
+type: concept
+description: >-
+  One-sentence summary of what this concept is.
 tags: [tag1, tag2]
 origin: conversation | ephemeral
 created: YYYY-MM-DD
@@ -40,6 +43,8 @@ updated: YYYY-MM-DD
 ---
 ```
 
+- `type` — `concept` for regular pages; entity type for entities.
+- `description` — one sentence, derived from the content being filed.
 - `origin: conversation` — content from chat.
 - `origin: ephemeral` — content from a temporary file.
 - No `sources:` field — no permanent source document.
